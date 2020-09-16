@@ -6,7 +6,7 @@ import numpy as np
 
 import os 
 
-class DockingEnv():
+class DockEnv():
 
     def __init__(self):
 
@@ -16,7 +16,7 @@ class DockingEnv():
         self.ligand = None
         self.receptor = None
         self.exhaustiveness = 1
-        self.max_steps = 16
+        self.max_steps = 5
 
 
     def run_docking(self, action=None):
@@ -29,7 +29,8 @@ class DockingEnv():
                     + " -l ./data/ligands/{}".format(self.ligand) \
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
-                    + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])
+                    + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])\
+                    + " --cpu 3 -q" 
         else:
             with open("dock.score",'w') as f:
                 my_scoring_weights = "{:.8f} gauss(o=0,_w=0.5,_c=8)\n".format(action[0])\
@@ -47,7 +48,8 @@ class DockingEnv():
                     + " -l ./data/ligands/{}".format(self.ligand) \
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
-                    + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])
+                    + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])\
+                    + " --cpu 3 -q" 
 
         os.system(my_command)
 
@@ -127,14 +129,14 @@ class DockingEnv():
         self.run_docking()
 
         rmsd = self.get_rmsd() 
-        obs = np.append(rmsd, np.zeros((5)))
+        obs = np.append(rmsd, np.zeros((6)))
 
         return obs
 
 
 if __name__ == "__main__":
 
-    env = DockingEnv()
+    env = DockEnv()
 
     obs = env.reset()
     

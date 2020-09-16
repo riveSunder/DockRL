@@ -8,7 +8,7 @@ from collections import OrderedDict
 
 class MRNN(nn.Module):
 
-    def __init__(self, dim_in=6, dim_act=6):
+    def __init__(self, dim_in=6, dim_act=5):
         super(MRNN, self).__init__()
 
         self.dim_in = dim_in
