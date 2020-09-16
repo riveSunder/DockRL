@@ -126,6 +126,7 @@ class CMAES():
                 "sd_fitness": [],\
                 "total_env_interacts": []}
 
+        t0 = time.time()
         for gen in range(max_generations):
             fitness_list = []
             for agent_idx in range(self.population_size):
@@ -138,11 +139,13 @@ class CMAES():
             max_fit = np.max(fitness)
             mean_fit = np.mean(fitness)
             sd_fit = np.std(fitness)
+            t1 = time.time()
+            elapsed = t1 - t0
             print("gen {}, fitness mean: {:.2e} +/- {:.2e} s.d."\
                     .format(gen, mean_fit, sd_fit) \
-                    + "total env. interactions: {}".format(self.total_env_interacts))
+                    + "{:.2f} elapsed, total env. interactions: {}"\
+                    .format(elapsed, self.total_env_interacts))
 
-            self.update_pop(fitness_list)
 
             fitness_log["max_fitness"].append(max_fit)
             fitness_log["mean_fitness"].append(mean_fit)
@@ -151,9 +154,11 @@ class CMAES():
 
             np.save(exp_id, fitness_log)
 
+            self.update_pop(fitness_list)
+
 if __name__ == "__main__":
 
     cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
 
-    cmaes.train(max_generations=3)
+    cmaes.train(max_generations=100)
 

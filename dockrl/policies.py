@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from collections import OrderedDict
+from functools import reduce
 
 class MRNN(nn.Module):
 
@@ -13,7 +14,7 @@ class MRNN(nn.Module):
 
         self.dim_in = dim_in
         self.dim_act = dim_act
-        self.dim_h = 32
+        self.dim_h = 8
 
         self.init_params()
 
