@@ -1,7 +1,7 @@
 # DockRL
 
 <div align="center">
-<img src="./assets/dockrl_overview.png" width="50%">
+<img src="./assets/dockrl_overview.png" width="90%">
 </div>
 
 
