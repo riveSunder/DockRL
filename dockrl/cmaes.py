@@ -136,14 +136,14 @@ class CMAES():
 
                 self.total_env_interacts += steps
 
-            max_fit = np.max(fitness)
-            mean_fit = np.mean(fitness)
-            sd_fit = np.std(fitness)
+            max_fit = np.max(fitness_list)
+            mean_fit = np.mean(fitness_list)
+            sd_fit = np.std(fitness_list)
             t1 = time.time()
             elapsed = t1 - t0
-            print("gen {}, fitness mean: {:.2e} +/- {:.2e} s.d."\
-                    .format(gen, mean_fit, sd_fit) \
-                    + "{:.2f} elapsed, total env. interactions: {}"\
+            print("gen {}, fitness mean: {:.2e} +/- {:.2e} s.d. max {:.2e}"\
+                    .format(gen, mean_fit, sd_fit, max_fit) )
+            print("{:.2f} elapsed, total env. interactions: {}"\
                     .format(elapsed, self.total_env_interacts))
 
 
