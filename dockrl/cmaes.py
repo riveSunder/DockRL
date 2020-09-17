@@ -8,7 +8,7 @@ from collections import OrderedDict
 from copy import deepcopy
 import time
 
-from dockrl.policies import MRNN
+from dockrl.policies import MRNN, Params
 from dockrl.dock_env import DockEnv
 
 class CMAES():
@@ -156,9 +156,23 @@ class CMAES():
 
             self.update_pop(fitness_list)
 
+class DirectCMAES(CMAES):
+
+    def __init__(self, policy_fn=Params, env_fn=DockEnv, dim_in=7, dim_act=6):
+        super(DirectCMAES, self).__init__(policy_fn, env_fn, dim_in, dim_act)
+
+    def get_agent_action(self, obs, agent_idx):
+
+        obs = obs.reshape(1, self.dim_in)
+        action = self.population[agent_idx].forward(obs)
+
+        return action
+
 if __name__ == "__main__":
 
-    cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
+    cmaes_direct = DirectCMAES(policy_fn=Params, env_fn=DockEnv)
+    cmaes_direct.train(max_generations=1000)
 
-    cmaes.train(max_generations=100)
+    cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
+    cmaes.train(max_generations=10)
 

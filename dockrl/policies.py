@@ -7,8 +7,34 @@ import numpy as np
 from collections import OrderedDict
 from functools import reduce
 
-class MRNN(nn.Module):
+class Params():
 
+    def __init__(self, dim_in=7, dim_act=6):
+        
+        self.dim_act = dim_act
+
+        self.init_params()
+
+    def init_params(self):
+
+        self.params = np.random.randn(self.dim_act)
+        self.num_params = self.dim_act
+
+    def forward(self, obs):
+        return self.get_params()
+
+    def get_params(self):
+        return self.params
+
+    def set_params(self, params):
+        assert params.shape == self.params.shape
+
+        self.params = params 
+
+    def reset(self):
+        pass
+
+class MRNN(nn.Module):
     def __init__(self, dim_in=6, dim_act=5):
         super(MRNN, self).__init__()
 

@@ -16,7 +16,7 @@ class DockEnv():
         self.ligand = None
         self.receptor = None
         self.exhaustiveness = 1
-        self.max_steps = 5
+        self.max_steps = 2
 
 
     def run_docking(self, action=None):
@@ -91,6 +91,30 @@ class DockEnv():
 
         return rmsd
 
+    def get_default_rmsd(self):
+
+        self.run_docking(action=None)
+
+        rmsd = self.get_rmsd()
+
+        print("default rmsd is ", rmsd)
+
+    def get_esben_rmsd(self):
+
+        action = np.array([-0.0460161,\
+                -0.000384274,\
+                -0.00812176,\
+                -0.431416,\
+                0.366584,\
+                0.0])
+        self.run_docking(action)
+
+        rmsd = self.get_rmsd()
+
+        print("rmsd with weighting from Esben et al. 2016 ", rmsd)
+
+        return rmsd
+
     def step(self, action):
 
         assert self.ligand is not None, "Must call env.reset() before env.step(action)"
@@ -110,7 +134,7 @@ class DockEnv():
         else:
             done = False
 
-        info = {"msg": "thanks for looking at info"}
+        info = {"rmsd": rmsd}
 
         return obs, reward, done, info 
         
@@ -142,6 +166,10 @@ if __name__ == "__main__":
     
     done = False
     reward_sum = 0.0
+
+    env.get_esben_rmsd()
+    env.get_default_rmsd()
+
     while not done:
         obs, reward, done, info = env.step(np.random.randn(6))
 
