@@ -93,11 +93,17 @@ class DockEnv():
 
     def get_default_rmsd(self):
 
-        self.run_docking(action=None)
+        rmsd = 0.0
+        num_docks = 10
+        for ii in range(num_docks):
+            self.run_docking(action=None)
 
-        rmsd = self.get_rmsd()
+            rmsd += self.get_rmsd()
 
-        print("default rmsd is ", rmsd)
+        rmsd /= num_docks
+
+        print("Average rmsd over {} runs with default score weighting  = {:.3f}"\
+                .format(num_docks, rmsd))
 
     def get_esben_rmsd(self):
 
@@ -107,11 +113,18 @@ class DockEnv():
                 -0.431416,\
                 0.366584,\
                 0.0])
-        self.run_docking(action)
 
-        rmsd = self.get_rmsd()
+        rmsd = 0.0
+        num_docks = 10
+        for ii in range(num_docks):
+            self.run_docking(action=None)
 
-        print("rmsd with weighting from Esben et al. 2016 ", rmsd)
+            rmsd += self.get_rmsd()
+
+        rmsd /= num_docks
+
+        print("Average rmsd over {} runs with weighting from Esben et al. 2016 = {:.3f}"\
+                .format(num_docks, rmsd))
 
         return rmsd
 
@@ -181,11 +194,11 @@ if __name__ == "__main__":
     env.get_esben_rmsd()
     env.get_default_rmsd()
 
+    import pdb; pdb.set_trace()
     while not done:
         obs, reward, done, info = env.step(np.random.randn(6))
 
         reward_sum += reward
 
     print("cumulative reward: {}".format(reward_sum))
-
 
