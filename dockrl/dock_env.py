@@ -16,7 +16,7 @@ class DockEnv():
         self.ligand = None
         self.receptor = None
         self.exhaustiveness = 1
-        self.max_steps = 2
+        self.max_steps = 1
 
 
     def run_docking(self, action=None):
@@ -129,10 +129,10 @@ class DockEnv():
 
         self.steps += 1
 
-        if self.steps >= self.max_steps:
-            done = True
-        else:
+        if self.steps < self.max_steps:
             done = False
+        else:
+            done = True
 
         info = {"rmsd": rmsd}
 
@@ -150,10 +150,21 @@ class DockEnv():
                 self.receptor = receptor
                 break
 
-        self.run_docking()
 
-        rmsd = self.get_rmsd() 
-        obs = np.append(rmsd, np.zeros((6)))
+        if (0):
+            action = np.array([-0.0460161,\
+                    -0.000384274,\
+                    -0.00812176,\
+                    -0.431416,\
+                    0.366584,\
+                    0.0])
+
+            self.run_docking(action)
+            rmsd = self.get_rmsd() 
+
+            obs = np.append(rmsd, action)
+        else:
+            obs = np.zeros((7))
 
         return obs
 
@@ -176,6 +187,5 @@ if __name__ == "__main__":
         reward_sum += reward
 
     print("cumulative reward: {}".format(reward_sum))
-
 
 

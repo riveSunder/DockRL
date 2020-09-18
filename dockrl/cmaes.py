@@ -66,7 +66,7 @@ class CMAES():
 
         fitness = np.sum(sum_rewards)
 
-        return fitness, total_steps
+        return fitness, total_steps, info
 
     def update_pop(self, fitness_list):
 
@@ -124,15 +124,22 @@ class CMAES():
         fitness_log = {"max_fitness": [],\
                 "mean_fitness": [],\
                 "sd_fitness": [],\
-                "total_env_interacts": []}
+                "total_env_interacts": [],\
+                "rmsd_mean": [],\
+                "rmsd_min": [],\
+                "rmsd_sd": []}
+
 
         t0 = time.time()
+        rmsd = []
+
         for gen in range(max_generations):
             fitness_list = []
             for agent_idx in range(self.population_size):
 
-                fitness, steps = self.get_fitness(agent_idx)
+                fitness, steps, info = self.get_fitness(agent_idx)
                 fitness_list.append(fitness)
+                rmsd.append(info["rmsd"])
 
                 self.total_env_interacts += steps
 
@@ -151,6 +158,9 @@ class CMAES():
             fitness_log["mean_fitness"].append(mean_fit)
             fitness_log["sd_fitness"].append(sd_fit)
             fitness_log["total_env_interacts"].append(self.total_env_interacts)
+            fitness_log["rmsd_min"].append(np.min(rmsd))
+            fitness_log["rmsd_mean"].append(np.mean(rmsd))
+            fitness_log["rmsd_sd"].append(np.std(rmsd))
 
             np.save(exp_id, fitness_log)
 
@@ -170,9 +180,12 @@ class DirectCMAES(CMAES):
 
 if __name__ == "__main__":
 
-    cmaes_direct = DirectCMAES(policy_fn=Params, env_fn=DockEnv)
-    cmaes_direct.train(max_generations=1000)
-
-    cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
-    cmaes.train(max_generations=10)
+    if(0):
+        cmaes_direct = DirectCMAES(policy_fn=Params, env_fn=DockEnv)
+        cmaes_direct.train(max_generations=1000)
+    else:
+        cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
+        cmaes.max_steps = 4
+        cmaes.train(max_generations=200)
+    import pdb; pdb.set_trace()
 
