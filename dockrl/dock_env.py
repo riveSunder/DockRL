@@ -51,6 +51,7 @@ class DockEnv():
                     + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])\
                     + " --cpu 3 -q" 
 
+        #import pdb; pdb.set_trace()
         os.system(my_command)
 
     
@@ -72,19 +73,20 @@ class DockEnv():
         while ("ATOM" not in comp) or ('1' not in comp):
             comp = f.readline().split()
 
+
         while not stop:
 
             gt = f_gt.readline().split()
             comp = f.readline().split()
 
-            if len(gt) == 12:
+            if len(gt) >= 12:
                 count += 1
                 coords_gt = np.array([float(elem) for elem in gt[5:8]])
                 coords_comp = np.array([float(elem) for elem in comp[5:8]])
 
                 rsd += np.sum(np.sqrt((coords_gt - coords_comp)**2))
 
-            if count > 0 and len(gt) < 12:
+            if count > 0 and "TORSDOF" in gt:
                 stop = True
 
         rmsd = rsd / count
@@ -94,8 +96,10 @@ class DockEnv():
     def get_default_rmsd(self):
 
         rmsd = 0.0
-        num_docks = 10
+        num_docks = 50
         for ii in range(num_docks):
+            
+            _ = self.reset()
             self.run_docking(action=None)
 
             rmsd += self.get_rmsd()
@@ -107,17 +111,19 @@ class DockEnv():
 
     def get_esben_rmsd(self):
 
+
+        rmsd = 0.0
+        num_docks = 50
+
         action = np.array([-0.0460161,\
                 -0.000384274,\
                 -0.00812176,\
                 -0.431416,\
                 0.366584,\
                 0.0])
-
-        rmsd = 0.0
-        num_docks = 10
         for ii in range(num_docks):
-            self.run_docking(action=None)
+            _ = self.reset()
+            self.run_docking(action)
 
             rmsd += self.get_rmsd()
 
@@ -136,7 +142,7 @@ class DockEnv():
 
         rmsd = self.get_rmsd()
 
-        reward = 2.0 - rmsd
+        reward = - rmsd
 
         obs = np.append(action, reward)
 

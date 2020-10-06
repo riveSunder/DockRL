@@ -1,0 +1,69 @@
+HETATM    1  N1  FSN H 501      10.552 -12.064  23.887  1.00 14.01      F    N  
+HETATM    2  N2  FSN H 501      11.079  -9.910  24.485  1.00 12.96      F    N  
+HETATM    3  C3  FSN H 501      11.383 -11.001  23.737  1.00 14.19      F    C  
+HETATM    4  C4  FSN H 501      12.524 -11.044  22.837  1.00 14.63      F    C  
+HETATM    5  C5  FSN H 501      13.270  -9.890  22.573  1.00 14.27      F    C  
+HETATM    6  C6  FSN H 501      14.356  -9.961  21.695  1.00 15.63      F    C  
+HETATM    7  C7  FSN H 501      14.670 -11.204  21.092  1.00 16.28      F    C  
+HETATM    8  C8  FSN H 501      13.928 -12.350  21.361  1.00 16.45      F    C  
+HETATM    9  C9  FSN H 501      12.851 -12.291  22.235  1.00 16.32      F    C  
+HETATM   10  C10 FSN H 501      15.863 -11.337  20.194  1.00 18.51      F    C  
+HETATM   11  N11 FSN H 501      15.799 -12.440  19.140  1.00 19.59      F    N  
+HETATM   12  C12 FSN H 501      14.969 -11.997  17.983  1.00 19.71      F    C  
+HETATM   13  C13 FSN H 501      15.891 -12.193  16.736  1.00 20.42      F    C  
+HETATM   14  C14 FSN H 501      17.251 -11.672  17.223  1.00 20.94      F    C  
+HETATM   15  C15 FSN H 501      17.217 -12.198  18.600  1.00 20.70      F    C  
+HETATM   16  C16 FSN H 501      18.245 -11.812  19.663  1.00 20.79      F    C  
+HETATM   17  C17 FSN H 501      19.064 -12.906  20.178  1.00 21.88      F    C  
+HETATM   18  O18 FSN H 501      20.042 -13.392  19.632  1.00 25.28      F    O  
+HETATM   19  N19 FSN H 501      18.531 -13.329  21.430  1.00 20.80      F    N  
+HETATM   20  C20 FSN H 501      17.409 -12.545  21.780  1.00 19.63      F    C  
+HETATM   21  O21 FSN H 501      16.695 -12.816  22.729  1.00 18.19      F    O  
+HETATM   22  C22 FSN H 501      17.247 -11.443  20.807  1.00 19.37      F    C  
+HETATM   23  C23 FSN H 501      18.867 -14.543  22.173  1.00 21.85      F    C  
+HETATM   24  C24 FSN H 501      19.788 -14.211  23.315  1.00 22.66      F    C  
+HETATM   25  C25 FSN H 501      21.174 -14.052  23.069  1.00 24.26      F    C  
+HETATM   26  C26 FSN H 501      22.058 -13.774  24.142  1.00 23.89      F    C  
+HETATM   27  C30 FSN H 501      21.475 -13.667  25.413  1.00 24.46      F    C  
+HETATM   28  C31 FSN H 501      20.106 -13.806  25.677  1.00 22.99      F    C  
+HETATM   29  C32 FSN H 501      19.251 -14.080  24.610  1.00 22.71      F    C  
+HETATM   30  F29 FSN H 501      22.247 -13.424  26.487  1.00 26.15      F    F  
+HETATM   31  H01 FSN H 501      10.277  -9.926  25.099  1.00 12.96      F    H  
+HETATM   32  H02 FSN H 501      10.717 -12.912  23.364  1.00 14.01      F    H  
+HETATM   33  H03 FSN H 501      11.654  -9.082  24.427  1.00 12.96      F    H  
+HETATM   34  H04 FSN H 501       9.768 -12.007  24.522  1.00 14.01      F    H  
+CONECT    1    3   32   34
+CONECT    2    3   31   33
+CONECT    3    1    2    4
+CONECT    4    3    5    9
+CONECT    5    4    6
+CONECT    6    5    7
+CONECT    7    6    8   10
+CONECT    8    7    9
+CONECT    9    4    8
+CONECT   10    7   11   22
+CONECT   11   10   12   15
+CONECT   12   11   13
+CONECT   13   12   14
+CONECT   14   13   15
+CONECT   15   11   14   16
+CONECT   16   15   17   22
+CONECT   17   16   18   19
+CONECT   18   17
+CONECT   19   17   20   23
+CONECT   20   19   21   22
+CONECT   21   20
+CONECT   22   10   16   20
+CONECT   23   19   24
+CONECT   24   23   25   29
+CONECT   25   24   26
+CONECT   26   25   27
+CONECT   27   26   28   30
+CONECT   28   27   29
+CONECT   29   24   28
+CONECT   30   27
+CONECT   31    2
+CONECT   32    1
+CONECT   33    2
+CONECT   34    1
+END
