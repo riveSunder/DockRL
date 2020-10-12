@@ -19,9 +19,17 @@ class DockEnv():
         self.max_steps = 1
 
 
-    def run_docking(self, action=None):
+    def run_docking(self, action=None, idx=None):
 
         assert self.ligand is not None, "should be unreachable, call env.reset() first"
+
+        if idx is None:
+            obj_filename = "dock.score"
+            output_filename =  "./output/{}-redocking.pdbqt".format(self.ligand[0:4]) 
+        else:
+            obj_filename = "dock{}.score".format(idx)
+            output_filename =  "./output/{}-redocking{}.pdbqt"\
+                    .format(self.ligand[0:4], idx) 
 
         if action is None:
             my_command = "./smina.static"\
@@ -29,34 +37,41 @@ class DockEnv():
                     + " -l ./data/ligands/{}".format(self.ligand) \
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
-                    + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])\
+                    + " -o {}".format(output_filename)\
                     + " --cpu 3 -q" 
         else:
-            with open("dock.score",'w') as f:
-                my_scoring_weights = "{:.8f} gauss(o=0,_w=0.5,_c=8)\n".format(action[0])\
-                        + "{:.8f} gauss(o=3,_w=2,_c=8)\n".format(action[1])\
-                        +"{:.8f} hydrophobic(g=0.5,_b=1.5,_c=8)\n".format(action[2])\
-                        +"{:.8f} non_dir_h_bond(g=-0.7,_b=0,_c=8)\n".format(action[3])\
-                        + "{:.8f} repulsion(o=0,_c=8)\n".format(action[4])\
-                        + "{:.8f} num_tors_div".format(action[5])
+            f = open(obj_filename,'w')
 
-                f.write(my_scoring_weights)
-                f.close()
+            my_scoring_weights = "{:.8f} gauss(o=0,_w=0.5,_c=8)\n".format(action[0])\
+                    + "{:.8f} gauss(o=3,_w=2,_c=8)\n".format(action[1])\
+                    +"{:.8f} hydrophobic(g=0.5,_b=1.5,_c=8)\n".format(action[2])\
+                    +"{:.8f} non_dir_h_bond(g=-0.7,_b=0,_c=8)\n".format(action[3])\
+                    + "{:.8f} repulsion(o=0,_c=8)\n".format(action[4])\
+                    + "{:.8f} num_tors_div".format(action[5])
 
-            my_command = "./smina.static --custom_scoring dock.score"\
+            
+            f.write(my_scoring_weights)
+            f.close()
+
+            my_command = "./smina.static --custom_scoring {}".format(obj_filename)\
                     + " -r ./data/receptors/{}".format(self.receptor) \
                     + " -l ./data/ligands/{}".format(self.ligand) \
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
-                    + " -o ./output/{}-redocking.pdbqt".format(self.ligand[0:4])\
+                    + " -o {}".format(output_filename)\
                     + " --cpu 3 -q" 
 
         os.system(my_command)
 
     
-    def get_rmsd(self):
+    def get_rmsd(self, worker_idx=None):
 
-        f = open("./output/{}-redocking.pdbqt".format(self.ligand[0:4]), 'r')
+        if worker_idx is None:
+            redock_fn = "./output/{}-redocking.pdbqt".format(self.ligand[0:4])
+        else:
+            redock_fn = "./output/{}-redocking{}.pdbqt".format(self.ligand[0:4], worker_idx)
+
+        f = open(redock_fn, 'r')
         f_gt = open("./data/ligands/{}".format(self.ligand), 'r')
     
         stop = False
@@ -89,6 +104,9 @@ class DockEnv():
 
         rmsd = rsd / count
 
+        f.close()
+        f_gt.close()
+
         return rmsd
 
     def get_default_rmsd(self):
@@ -117,7 +135,7 @@ class DockEnv():
         rmsd = 0.0
         num_docks = 10
         for ii in range(num_docks):
-            self.run_docking(action=None)
+            self.run_docking(action)
 
             rmsd += self.get_rmsd()
 
@@ -128,15 +146,16 @@ class DockEnv():
 
         return rmsd
 
-    def step(self, action):
+
+    def step(self, action, worker_idx=None):
 
         assert self.ligand is not None, "Must call env.reset() before env.step(action)"
 
-        self.run_docking(action)
+        self.run_docking(action, idx=worker_idx)
 
-        rmsd = self.get_rmsd()
+        rmsd = self.get_rmsd(worker_idx=worker_idx)
 
-        reward = 2.0 - rmsd
+        reward = - rmsd
 
         obs = np.append(action, reward)
 
