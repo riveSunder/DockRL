@@ -1,0 +1,132 @@
+HETATM    1  C1  JE2 A 701      24.500   2.399  20.424  1.00 10.50      C    C  
+ANISOU    1  C1  JE2 A 701      947   1296   1746    -71   -547     27  C    C  
+HETATM    2  O2  JE2 A 701      25.856   2.446  20.562  1.00 11.52      C    O  
+ANISOU    2  O2  JE2 A 701      892   1481   2003   -103   -363   -376  C    O  
+HETATM    3  C3  JE2 A 701      23.687   3.448  20.947  1.00 10.07      C    C  
+ANISOU    3  C3  JE2 A 701      884   1614   1330   -126    -78    -11  C    C  
+HETATM    4  C4  JE2 A 701      22.339   3.432  20.726  1.00 10.16      C    C  
+ANISOU    4  C4  JE2 A 701      913   1647   1298   -229   -246   -374  C    C  
+HETATM    5  C5  JE2 A 701      21.727   2.354  20.024  1.00  9.16      C    C  
+ANISOU    5  C5  JE2 A 701      875   1222   1383   -133     58   -139  C    C  
+HETATM    6  C6  JE2 A 701      22.533   1.347  19.433  1.00  7.34      C    C  
+ANISOU    6  C6  JE2 A 701      703   1079   1007   -195     18    115  C    C  
+HETATM    7  C7  JE2 A 701      23.950   1.358  19.605  1.00  8.69      C    C  
+ANISOU    7  C7  JE2 A 701      687   1393   1221   -205   -117     48  C    C  
+HETATM    8  C8  JE2 A 701      24.899   0.374  18.930  1.00 10.05      C    C  
+ANISOU    8  C8  JE2 A 701      864   1557   1397    147     30    239  C    C  
+HETATM    9  C9  JE2 A 701      21.848   0.267  18.666  1.00  7.14      C    C  
+ANISOU    9  C9  JE2 A 701      706   1115    891   -108   -146    118  C    C  
+HETATM   10  O10 JE2 A 701      22.069  -0.990  18.943  1.00  8.61      C    O  
+ANISOU   10  O10 JE2 A 701      872   1112   1287    -44   -225     93  C    O  
+HETATM   11  N11 JE2 A 701      20.970   0.659  17.757  1.00  6.96      C    N  
+ANISOU   11  N11 JE2 A 701      716   1140    789    -89    -63     92  C    N  
+HETATM   12  C12 JE2 A 701      20.173  -0.362  16.980  1.00  7.60      C    C  
+ANISOU   12  C12 JE2 A 701      551   1316   1020     -1   -137   -214  C    C  
+HETATM   13  C13 JE2 A 701      18.686   0.194  16.874  1.00  7.99      C    C  
+ANISOU   13  C13 JE2 A 701      622   1205   1211     29    -91     48  C    C  
+HETATM   14  C14 JE2 A 701      18.148   0.637  18.212  1.00  7.95      C    C  
+ANISOU   14  C14 JE2 A 701      530    987   1502   -160    213     90  C    C  
+HETATM   15  C15 JE2 A 701      18.094   2.032  18.521  1.00  9.73      C    C  
+ANISOU   15  C15 JE2 A 701      924   1101   1673     22    301    -62  C    C  
+HETATM   16  C16 JE2 A 701      17.677   2.408  19.838  1.00 10.79      C    C  
+ANISOU   16  C16 JE2 A 701      985   1486   1628    172    324    -22  C    C  
+HETATM   17  C17 JE2 A 701      17.324   1.460  20.812  1.00 11.80      C    C  
+ANISOU   17  C17 JE2 A 701     1376   1580   1526    142    337    -75  C    C  
+HETATM   18  C18 JE2 A 701      17.375   0.104  20.472  1.00 10.74      C    C  
+ANISOU   18  C18 JE2 A 701     1074   1520   1487    248    362    101  C    C  
+HETATM   19  C19 JE2 A 701      17.797  -0.295  19.213  1.00  8.23      C    C  
+ANISOU   19  C19 JE2 A 701      672   1185   1270     22     49    145  C    C  
+HETATM   20  C20 JE2 A 701      20.868  -0.504  15.603  1.00  7.23      C    C  
+ANISOU   20  C20 JE2 A 701      890    819   1040   -105     62      0  C    C  
+HETATM   21  O21 JE2 A 701      20.521   0.582  14.746  1.00  8.55      C    O  
+ANISOU   21  O21 JE2 A 701      804   1020   1422     29    -99    104  C    O  
+HETATM   22  C22 JE2 A 701      20.360  -1.785  14.942  1.00  6.91      C    C  
+ANISOU   22  C22 JE2 A 701      425    957   1242     13     50   -228  C    C  
+HETATM   23  O23 JE2 A 701      19.299  -1.864  14.288  1.00  7.89      C    O  
+ANISOU   23  O23 JE2 A 701      649   1068   1281     16   -105     88  C    O  
+HETATM   24  N24 JE2 A 701      21.105  -2.923  15.130  1.00  7.10      C    N  
+ANISOU   24  N24 JE2 A 701      659    937   1102     -7   -152   -130  C    N  
+HETATM   25  C25 JE2 A 701      22.390  -2.947  15.922  1.00  7.75      C    C  
+ANISOU   25  C25 JE2 A 701      558    973   1412     49   -126   -100  C    C  
+HETATM   26  S26 JE2 A 701      22.775  -4.705  16.144  1.00  8.35      C    S  
+ANISOU   26  S26 JE2 A 701      751   1048   1375     26    -73    -60  C    S  
+HETATM   27  C27 JE2 A 701      21.898  -5.137  14.596  1.00  7.36      C    C  
+ANISOU   27  C27 JE2 A 701      495   1013   1291     65     15    -87  C    C  
+HETATM   28  C28 JE2 A 701      22.745  -4.760  13.379  1.00  8.27      C    C  
+ANISOU   28  C28 JE2 A 701      524   1385   1233     99    193   -333  C    C  
+HETATM   29  C29 JE2 A 701      21.562  -6.638  14.515  1.00  8.63      C    C  
+ANISOU   29  C29 JE2 A 701      636    982   1662    181    -44   -286  C    C  
+HETATM   30  C30 JE2 A 701      20.635  -4.226  14.610  1.00  7.10      C    C  
+ANISOU   30  C30 JE2 A 701      458    927   1312     36    168   -281  C    C  
+HETATM   31  C31 JE2 A 701      19.474  -4.746  15.483  1.00  7.69      C    C  
+ANISOU   31  C31 JE2 A 701      493   1196   1235    -25     62     -5  C    C  
+HETATM   32  O32 JE2 A 701      19.360  -4.502  16.721  1.00  7.69      C    O  
+ANISOU   32  O32 JE2 A 701      741   1021   1160    -86     31     34  C    O  
+HETATM   33  N33 JE2 A 701      18.568  -5.561  14.791  1.00  7.08      C    N  
+ANISOU   33  N33 JE2 A 701      571    919   1199     12    -46     94  C    N  
+HETATM   34  C34 JE2 A 701      17.426  -6.206  15.483  1.00  8.87      C    C  
+ANISOU   34  C34 JE2 A 701      610   1222   1537   -278   -177    197  C    C  
+HETATM   35  C35 JE2 A 701      16.136  -5.981  14.682  1.00  8.36      C    C  
+ANISOU   35  C35 JE2 A 701      694    879   1605   -108   -177    189  C    C  
+HETATM   36  C36 JE2 A 701      15.480  -4.731  14.667  1.00  7.40      C    C  
+ANISOU   36  C36 JE2 A 701      707    937   1167    -73    280    328  C    C  
+HETATM   37  C37 JE2 A 701      14.267  -4.624  13.979  1.00 10.31      C    C  
+ANISOU   37  C37 JE2 A 701      670   1204   2044   -129    -17    455  C    C  
+HETATM   38  C38 JE2 A 701      13.736  -5.747  13.296  1.00  9.56      C    C  
+ANISOU   38  C38 JE2 A 701      945   1581   1106    124    -15    207  C    C  
+HETATM   39  C39 JE2 A 701      14.365  -6.959  13.309  1.00  9.43      C    C  
+ANISOU   39  C39 JE2 A 701      776   1180   1627   -325   -228    552  C    C  
+HETATM   40  C40 JE2 A 701      15.577  -7.073  14.028  1.00  8.29      C    C  
+ANISOU   40  C40 JE2 A 701      575   1107   1466   -262    -61     74  C    C  
+HETATM   41  C41 JE2 A 701      16.013  -3.575  15.420  1.00 11.47      C    C  
+ANISOU   41  C41 JE2 A 701     1047   1274   2036    117     61   -327  C    C  
+HETATM   42  H01 JE2 A 701      18.695  -5.712  13.801  1.00  7.08      C    H  
+HETATM   43  H02 JE2 A 701      26.220   1.564  20.457  1.00 11.52      C    H  
+HETATM   44  H03 JE2 A 701      20.832   1.644  17.582  1.00  6.96      C    H  
+HETATM   45  H04 JE2 A 701      20.324   0.247  13.868  1.00  8.55      C    H  
+CONECT    1    2    3    7
+CONECT    2    1   43
+CONECT    3    1    4
+CONECT    4    3    5
+CONECT    5    4    6
+CONECT    6    5    7    9
+CONECT    7    1    6    8
+CONECT    8    7
+CONECT    9    6   10   11
+CONECT   10    9
+CONECT   11    9   12   44
+CONECT   12   11   13   20
+CONECT   13   12   14
+CONECT   14   13   15   19
+CONECT   15   14   16
+CONECT   16   15   17
+CONECT   17   16   18
+CONECT   18   17   19
+CONECT   19   14   18
+CONECT   20   12   21   22
+CONECT   21   20   45
+CONECT   22   20   23   24
+CONECT   23   22
+CONECT   24   22   25   30
+CONECT   25   24   26
+CONECT   26   25   27
+CONECT   27   26   28   29   30
+CONECT   28   27
+CONECT   29   27
+CONECT   30   24   27   31
+CONECT   31   30   32   33
+CONECT   32   31
+CONECT   33   31   34   42
+CONECT   34   33   35
+CONECT   35   34   36   40
+CONECT   36   35   37   41
+CONECT   37   36   38
+CONECT   38   37   39
+CONECT   39   38   40
+CONECT   40   35   39
+CONECT   41   36
+CONECT   42   33
+CONECT   43    2
+CONECT   44   11
+CONECT   45   21
+END

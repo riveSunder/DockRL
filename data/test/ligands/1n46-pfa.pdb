@@ -1,0 +1,113 @@
+HETATM    1  C1  PFA A 462      20.103   7.482   2.696  1.00 15.13      C    C  
+HETATM    2  C2  PFA A 462      18.956   6.702   2.397  1.00 14.62      C    C  
+HETATM    3  C3  PFA A 462      18.553   5.719   3.321  1.00 13.85      C    C  
+HETATM    4  N3  PFA A 462      20.032   3.413   5.406  1.00 16.79      C    N  
+HETATM    5  C4  PFA A 462      19.299   5.407   4.443  1.00 15.11      C    C  
+HETATM    6  C5  PFA A 462      20.493   6.176   4.753  1.00 16.98      C    C  
+HETATM    7  N5  PFA A 462      19.023   4.410   5.400  1.00 17.00      C    N  
+HETATM    8  C6  PFA A 462      20.859   7.233   3.877  1.00 16.48      C    C  
+HETATM    9  N6  PFA A 462      17.977   3.356   7.189  1.00 17.11      C    N  
+HETATM   10  C7  PFA A 462      22.040   8.059   4.115  1.00 15.65      C    C  
+HETATM   11  C8  PFA A 462      23.293  11.889  -0.716  1.00 18.22      C    C  
+HETATM   12  O8  PFA A 462      18.955   1.489   8.047  1.00 16.66      C    O  
+HETATM   13  C9  PFA A 462      25.097  10.780   0.760  1.00 18.20      C    C  
+HETATM   14  O9  PFA A 462      17.223   5.255   6.139  1.00 17.72      C    O  
+HETATM   15  C10 PFA A 462      18.947   2.397   7.246  1.00 14.56      C    C  
+HETATM   16  C14 PFA A 462      18.023   4.377   6.268  1.00 17.29      C    C  
+HETATM   17  C17 PFA A 462      20.019   2.446   6.252  1.00 11.13      C    C  
+HETATM   18  C19 PFA A 462      18.088   7.020   1.162  1.00 11.58      C    C  
+HETATM   19  O20 PFA A 462      20.380   8.504   1.813  1.00 15.24      C    O  
+HETATM   20  C21 PFA A 462      21.419   8.339   0.910  1.00 18.50      C    C  
+HETATM   21  C22 PFA A 462      22.220   9.512   0.664  1.00 16.75      C    C  
+HETATM   22  C24 PFA A 462      23.295   9.425  -0.257  1.00 19.54      C    C  
+HETATM   23  C25 PFA A 462      24.211  10.646  -0.504  1.00 19.88      C    C  
+HETATM   24  C26 PFA A 462      23.583   8.175  -0.855  1.00 14.31      C    C  
+HETATM   25  O27 PFA A 462      24.637   8.036  -1.731  1.00 18.31      C    O  
+HETATM   26  C29 PFA A 462      22.756   7.045  -0.637  1.00 12.55      C    C  
+HETATM   27  C31 PFA A 462      21.680   7.075   0.261  1.00 10.96      C    C  
+HETATM   28  H01 PFA A 462      24.825   8.882  -2.143  1.00 18.31      C    H  
+HETATM   29  C1  PFA B 463       6.072 -20.533 -27.759  1.00 28.97      D    C  
+HETATM   30  C2  PFA B 463       7.220 -19.648 -27.798  1.00 28.51      D    C  
+HETATM   31  C3  PFA B 463       7.248 -18.540 -26.877  1.00 29.64      D    C  
+HETATM   32  N3  PFA B 463       5.067 -16.388 -25.224  1.00 20.57      D    N  
+HETATM   33  C4  PFA B 463       6.157 -18.340 -25.959  1.00 26.91      D    C  
+HETATM   34  C5  PFA B 463       5.046 -19.211 -25.913  1.00 27.05      D    C  
+HETATM   35  N5  PFA B 463       6.090 -17.347 -24.994  1.00 27.06      D    N  
+HETATM   36  C6  PFA B 463       5.025 -20.313 -26.797  1.00 28.84      D    C  
+HETATM   37  N6  PFA B 463       6.708 -16.434 -22.980  1.00 29.09      D    N  
+HETATM   38  C7  PFA B 463       3.850 -21.263 -26.768  1.00 29.75      D    C  
+HETATM   39  C8  PFA B 463       3.619 -24.919 -32.139  1.00 24.72      D    C  
+HETATM   40  O8  PFA B 463       5.534 -14.609 -22.330  1.00 29.68      D    O  
+HETATM   41  C9  PFA B 463       1.614 -23.912 -31.249  1.00 23.92      D    C  
+HETATM   42  O9  PFA B 463       7.699 -18.305 -23.849  1.00 26.75      D    O  
+HETATM   43  C10 PFA B 463       5.759 -15.502 -23.132  1.00 26.70      D    C  
+HETATM   44  C14 PFA B 463       6.881 -17.410 -23.917  1.00 28.72      D    C  
+HETATM   45  C17 PFA B 463       4.918 -15.520 -24.343  1.00 27.88      D    C  
+HETATM   46  C19 PFA B 463       8.363 -19.816 -28.793  1.00 25.30      D    C  
+HETATM   47  O20 PFA B 463       5.959 -21.621 -28.664  1.00 25.66      D    O  
+HETATM   48  C21 PFA B 463       5.195 -21.451 -29.809  1.00 23.00      D    C  
+HETATM   49  C22 PFA B 463       4.427 -22.533 -30.315  1.00 23.48      D    C  
+HETATM   50  C24 PFA B 463       3.679 -22.413 -31.513  1.00 21.17      D    C  
+HETATM   51  C25 PFA B 463       2.848 -23.588 -32.093  1.00 20.68      D    C  
+HETATM   52  C26 PFA B 463       3.680 -21.169 -32.186  1.00 18.08      D    C  
+HETATM   53  O27 PFA B 463       2.960 -20.990 -33.360  1.00 20.25      D    O  
+HETATM   54  C29 PFA B 463       4.404 -20.081 -31.688  1.00 17.68      D    C  
+HETATM   55  C31 PFA B 463       5.183 -20.196 -30.536  1.00 21.71      D    C  
+HETATM   56  H01 PFA B 463       2.707 -21.846 -33.715  1.00 20.25      D    H  
+CONECT    1    2    8   19
+CONECT    2    1    3   18
+CONECT    3    2    5
+CONECT    4    7   17
+CONECT    5    3    6    7
+CONECT    6    5    8
+CONECT    7    4    5   16
+CONECT    8    1    6   10
+CONECT    9   15   16
+CONECT   10    8
+CONECT   11   23
+CONECT   12   15
+CONECT   13   23
+CONECT   14   16
+CONECT   15    9   12   17
+CONECT   16    7    9   14
+CONECT   17    4   15
+CONECT   18    2
+CONECT   19    1   20
+CONECT   20   19   21   27
+CONECT   21   20   22
+CONECT   22   21   23   24
+CONECT   23   11   13   22
+CONECT   24   22   25   26
+CONECT   25   24   28
+CONECT   26   24   27
+CONECT   27   20   26
+CONECT   28   25
+CONECT   29   30   36   47
+CONECT   30   29   31   46
+CONECT   31   30   33
+CONECT   32   35   45
+CONECT   33   31   34   35
+CONECT   34   33   36
+CONECT   35   32   33   44
+CONECT   36   29   34   38
+CONECT   37   43   44
+CONECT   38   36
+CONECT   39   51
+CONECT   40   43
+CONECT   41   51
+CONECT   42   44
+CONECT   43   37   40   45
+CONECT   44   35   37   42
+CONECT   45   32   43
+CONECT   46   30
+CONECT   47   29   48
+CONECT   48   47   49   55
+CONECT   49   48   50
+CONECT   50   49   51   52
+CONECT   51   39   41   50
+CONECT   52   50   53   54
+CONECT   53   52   56
+CONECT   54   52   55
+CONECT   55   48   54
+CONECT   56   53
+END

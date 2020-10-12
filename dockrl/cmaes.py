@@ -28,7 +28,7 @@ class CMAES():
 
         self.num_workers = num_workers
         self.population_size = pop_size
-        self.elite_keep = int(self.population_size/4)
+        self.elite_keep = int(self.population_size/8)
 
         self.dim_in = dim_in
         self.dim_act = dim_act
@@ -41,38 +41,44 @@ class CMAES():
     
         self.total_env_interacts = 0
 
-    def get_agent_action(self, obs, agent_idx):
+    def get_agent_action(self, obs, agent_idx, elite=False):
 
-        obs = obs.reshape(1, self.dim_in)
-        action = self.population[agent_idx].forward(obs)
+        if elite:
+            obs = obs.reshape(1, self.dim_in)
+            action = self.elite_pop[agent_idx].forward(obs)
+        else:
+            obs = obs.reshape(1, self.dim_in)
+            action = self.population[agent_idx].forward(obs)
+
         action = action.detach().numpy().squeeze()
 
         return action
 
     
-    def get_fitness(self, agent_idx, worker_idx=None):
+    def get_fitness(self, agent_idx, worker_idx=None, epds=1):
 
         fitness = []
         sum_rewards = []
         total_steps = 0
 
-        self.population[agent_idx].reset()
+        for epd in range(epds):
+            self.population[agent_idx].reset()
 
-        obs = self.env.reset()
-        done = False
-        sum_reward = 0.0
-        while not done:
-            action = self.get_agent_action(obs, agent_idx)
+            obs = self.env.reset()
+            done = False
+            sum_reward = 0.0
+            while not done:
+                action = self.get_agent_action(obs, agent_idx)
 
-            if len(action.shape) > 1:
-                action = action[0]
+                if len(action.shape) > 1:
+                    action = action[0]
 
-            obs, reward, done, info = self.env.step(action, worker_idx)
+                obs, reward, done, info = self.env.step(action, worker_idx)
 
-            sum_reward += reward
-            total_steps += 1
+                sum_reward += reward
+                total_steps += 1
 
-        sum_rewards.append(sum_reward)
+            sum_rewards.append(sum_reward)
 
         fitness = np.sum(sum_rewards)
 
@@ -187,13 +193,14 @@ class CMAES():
         t0 = time.time()
         rmsd = []
 
-        for gen in range(max_generations):
+        for gen in range(max_generations+1):
 
             if gen > 0:
                 # receive parameters from workers (skip on first pass)
 
                 # update population (skip on first pass) 
                 self.update_pop(fitness_list)
+
 
             # send parameters to workers
             # but if num_workers == 0, just do it all in the mantle process
@@ -317,6 +324,27 @@ class CMAES():
             comm.send([fitness_sublist, total_substeps, info_sublist], dest=0)
             
 
+    def evaluate_rmsd(self):
+        
+        rmsd = 0.0
+        num_docks = 50
+
+        for ii in range(num_docks):
+            obs = self.env.reset()
+            action = self.get_agent_action(obs, 0, elite=True)
+            obs, reward, done, info = self.env.step(action)
+            action = self.get_agent_action(obs, 0, elite=True)
+
+            self.env.run_docking(action)
+
+            rmsd += self.env.get_rmsd()
+
+        rmsd /= num_docks
+
+        print("Average rmsd over {} runs with cmaes optimized weights = {:.3f}"\
+                .format(num_docks, rmsd))
+
+        return rmsd
 
 class DirectCMAES(CMAES):
 
@@ -326,11 +354,12 @@ class DirectCMAES(CMAES):
                 pop_size, dim_in, dim_act)
 
 
+    def get_agent_action(self, obs, agent_idx, elite=False):
 
-    def get_agent_action(self, obs, agent_idx):
-
-        #obs = obs.reshape(1, self.dim_in)
-        action = self.population[agent_idx].forward(obs)
+        if elite:
+            action = self.elite_pop[agent_idx].forward(obs)
+        else:
+            action = self.population[agent_idx].forward(obs)
 
         return action
 
@@ -353,10 +382,18 @@ if __name__ == "__main__":
     cmaes = DirectCMAES(policy_fn=Params, env_fn=DockEnv, num_workers=num_workers,\
             pop_size=pop_size, dim_in=7, dim_act=6)
     cmaes.train(max_generations=max_generations)
-    #cmaes.env.get_default_rmsd()
-    #cmaes.env.get_esben_rmsd()
+
+    if rank == 0:
+        rmsd_default = cmaes.env.get_default_rmsd()
+        rmsd_esben = cmaes.env.get_esben_rmsd()
+        optim_rmsd = cmaes.evaluate_rmsd()
+
+        print("rmsd for default, cma-es, Esben's scoring weights = {:.2e}, {:.2e}, {:.2e}"\
+                .format(rmsd_default, rmsd_esben, optim_rmsd))
+
+    print("end for rank ", rank)
+
     #cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
     #cmaes.max_steps = 4
     #cmaes.train(max_generations=200)
-
 
