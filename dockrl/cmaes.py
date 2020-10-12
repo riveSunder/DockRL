@@ -1,3 +1,6 @@
+import time
+import argparse
+
 import torch 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,17 +9,21 @@ import numpy as np
 
 from collections import OrderedDict
 from copy import deepcopy
-import time
 
 from dockrl.policies import MRNN, Params
 from dockrl.dock_env import DockEnv
 
+import mpi4py
+from mpi4py import MPI
+comm = MPI.COMM_WORLD
+
 class CMAES():
 
-    def __init__(self, policy_fn, env_fn=DockEnv, dim_in=7, dim_act=6):
+    def __init__(self, policy_fn, env_fn=DockEnv, num_workers=0, dim_in=7, dim_act=6):
 
         self.env = env_fn()
 
+        self.num_workers = num_workers
         self.population_size = 16
         self.elite_keep = int(self.population_size/4)
 
@@ -117,7 +124,51 @@ class CMAES():
 
             self.population[ll].set_params(params)
 
+    def mpi_fork(self, n):
+        """
+        relaunches the current script with workers
+        Returns "parent" for original parent, "child" for MPI children
+        (from https://github.com/garymcintire/mpi_util/)
+        via https://github.com/google/brain-tokyo-workshop/tree/master/WANNRelease
+        """
+        global num_worker, rank
+        if n<=1:
+            print("if n<=1")
+            num_worker = 0
+            rank = 0
+            return "child"
+
+        if os.getenv("IN_MPI") is None:
+            env = os.environ.copy()
+            env.update(\
+                    MKL_NUM_THREADS="1", \
+                    OMP_NUM_THREAdS="1",\
+                    IN_MPI="1",\
+                    )
+            print( ["mpirun", "-np", str(n), sys.executable] + sys.argv)
+            subprocess.check_call(["mpirun", "-np", str(n), sys.executable] \
+            +['-u']+ sys.argv, env=env)
+
+            return "parent"
+        else:
+            num_worker = comm.Get_size()
+            rank = comm.Get_rank()
+            return "child"
+
+
     def train(self, max_generations=10):
+
+        my_num_workers = self.num_workers
+
+        if self.mpi_fork(my_num_workers) == "parent":
+            os._exit(0)
+
+        if rank == 0:
+            self.mantle(max_generations)
+        else:
+            self.arm(max_generations)
+
+    def mantle(self, max_generations=10):
         
         exp_id = "./logs/exp_log{}.npy".format(int(time.time())) 
 
@@ -166,10 +217,16 @@ class CMAES():
 
             self.update_pop(fitness_list)
 
+        def arm(self, max_generations):
+            pass
+
 class DirectCMAES(CMAES):
 
-    def __init__(self, policy_fn=Params, env_fn=DockEnv, dim_in=7, dim_act=6):
-        super(DirectCMAES, self).__init__(policy_fn, env_fn, dim_in, dim_act)
+    def __init__(self, policy_fn=Params, env_fn=DockEnv, \
+            num_workers=0, dim_in=7, dim_act=6):
+        super(DirectCMAES, self).__init__(policy_fn, env_fn, num_workers, dim_in, dim_act)
+
+
 
     def get_agent_action(self, obs, agent_idx):
 
@@ -180,12 +237,19 @@ class DirectCMAES(CMAES):
 
 if __name__ == "__main__":
 
-    if(0):
-        cmaes_direct = DirectCMAES(policy_fn=Params, env_fn=DockEnv)
-        cmaes_direct.train(max_generations=1000)
-    else:
-        cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
-        cmaes.max_steps = 4
-        cmaes.train(max_generations=200)
+    parser = argparse.ArgumentParser("Optimization Parameters")
+    parser.add_argument("-c", "--cpu", type=int, default=0,\
+            help="number of cpu workers")
+
+    args = parser.parse_args()
+
+    num_workers = args.cpu
+
+    cmaes = DirectCMAES(policy_fn=Params, env_fn=DockEnv, num_workers=num_workers)
+    cmaes.train(max_generations=1)
+    #cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
+    #cmaes.max_steps = 4
+    #cmaes.train(max_generations=200)
+
     import pdb; pdb.set_trace()
 
