@@ -55,7 +55,7 @@ class CMAES():
         return action
 
     
-    def get_fitness(self, agent_idx, worker_idx=None, epds=1):
+    def get_fitness(self, agent_idx, worker_idx=None, epds=8):
 
         fitness = []
         sum_rewards = []

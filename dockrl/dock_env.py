@@ -166,8 +166,8 @@ class DockEnv():
         
         reward = - rmsd
         # regularization
-        l1_reg = 1e-3
-        l2_reg = 1e-3
+        l1_reg = 0.0 #1e-3
+        l2_reg = 0.0 #1e-3
         reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
 
 
