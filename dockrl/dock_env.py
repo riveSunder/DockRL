@@ -38,7 +38,7 @@ class DockEnv():
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
-                    + " --cpu 3 -q" 
+                    + " -q" 
         else:
             f = open(obj_filename,'w')
 
@@ -59,7 +59,7 @@ class DockEnv():
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
-                    + " --cpu 3 -q" 
+                    + " -q" 
 
         #import pdb; pdb.set_trace()
         os.system(my_command)
