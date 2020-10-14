@@ -12,6 +12,9 @@ class DockEnv():
 
         self.receptors_dir = os.listdir("./data/receptors/")
         self.ligands_dir = os.listdir("./data/ligands/")
+
+        self.receptors_test_dir = os.listdir("./data/test/receptors/")
+        self.ligands_test_dir = os.listdir("./data/test/ligands/")
         
         self.ligand = None
         self.receptor = None
@@ -62,7 +65,9 @@ class DockEnv():
                     + " -q" 
 
         #import pdb; pdb.set_trace()
+        print("ligand is ", self.ligand) 
         os.system(my_command)
+        print("return from os.system call to smina") 
 
     
     def get_rmsd(self, worker_idx=None):
@@ -83,16 +88,19 @@ class DockEnv():
         
         comp = f.readline().split() 
 
+        print("read through to ATOMs")
         while ("ATOM" not in gt) or ('1' not in gt):
             gt = f_gt.readline().split()
         while ("ATOM" not in comp) or ('1' not in comp):
             comp = f.readline().split()
 
 
-        while not stop:
+        #while not stop:
+        print("loop through and compute rsds")
+        for gt_line, comp_line in zip(f_gt.readlines(), f.readlines()):
 
-            gt = f_gt.readline().split()
-            comp = f.readline().split()
+            gt = gt_line.split()
+            comp = comp_line.split()
 
             if len(gt) >= 12:
                 count += 1
@@ -101,13 +109,16 @@ class DockEnv():
 
                 rsd += np.sum(np.sqrt((coords_gt - coords_comp)**2))
 
-            if count > 0 and "TORSDOF" in gt:
-                stop = True
+#            if count > 0 and "TORSDOF" in gt:
+#                stop = True
 
+        print(" div by count to get rmsd")
         rmsd = rsd / count
 
         f.close()
         f_gt.close()
+
+        print("about to return rmsd")
 
         return rmsd
 
@@ -117,7 +128,7 @@ class DockEnv():
         num_docks = 50
         for ii in range(num_docks):
             
-            _ = self.reset()
+            _ = self.reset(test=True)
             self.run_docking(action=None)
 
             rmsd += self.get_rmsd()
@@ -142,7 +153,7 @@ class DockEnv():
                 0.366584,\
                 0.0])
         for ii in range(num_docks):
-            _ = self.reset()
+            _ = self.reset(test=True)
             self.run_docking(action)
 
             rmsd += self.get_rmsd()
@@ -161,19 +172,20 @@ class DockEnv():
 
         self.run_docking(action, idx=worker_idx)
 
+        print("get rmsd")
         rmsd = self.get_rmsd(worker_idx=worker_idx)
+        print("rmsd got")
 
-        
         reward = - rmsd
         # regularization
         l1_reg = 0.0 #1e-3
         l2_reg = 0.0 #1e-3
         reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
 
-
         obs = np.append(action, reward)
 
         self.steps += 1
+        print("reward calculated")
 
         if self.steps < self.max_steps:
             done = False
@@ -182,20 +194,28 @@ class DockEnv():
 
         info = {"rmsd": rmsd}
 
+        print("about to return from step")
         return obs, reward, done, info 
         
-    def reset(self):
+    def reset(self, test=False):
 
         self.steps = 0
 
-        self.ligand = np.random.choice(self.ligands_dir, \
-                p=[1/len(self.ligands_dir) for elem in self.ligands_dir])
+        if test:
+            self.ligand = np.random.choice(self.ligands_test_dir, \
+                    p=[1/len(self.ligands_test_dir) for elem in self.ligands_test_dir])
+            for receptor in self.receptors_test_dir:
+                if self.ligand[0:4] in receptor:
+                    self.receptor = receptor
+                    break
+        else:
+            self.ligand = np.random.choice(self.ligands_dir, \
+                    p=[1/len(self.ligands_dir) for elem in self.ligands_dir])
+            for receptor in self.receptors_dir:
+                if self.ligand[0:4] in receptor:
+                    self.receptor = receptor
+                    break
         
-        for receptor in self.receptors_dir:
-            if self.ligand[0:4] in receptor:
-                self.receptor = receptor
-                break
-
 
         if (0):
             action = np.array([-0.0460161,\
