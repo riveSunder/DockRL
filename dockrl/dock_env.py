@@ -10,8 +10,8 @@ class DockEnv():
 
     def __init__(self):
 
-        self.receptors_dir = os.listdir("./data/receptors/")
-        self.ligands_dir = os.listdir("./data/ligands/")
+        self.receptors_dir = os.listdir("./data/train/receptors/")
+        self.ligands_dir = os.listdir("./data/train/ligands/")
 
         self.receptors_test_dir = os.listdir("./data/test/receptors/")
         self.ligands_test_dir = os.listdir("./data/test/ligands/")
@@ -36,8 +36,8 @@ class DockEnv():
 
         if action is None:
             my_command = "./smina.static"\
-                    +" -r ./data/receptors/{}".format(self.receptor) \
-                    + " -l ./data/ligands/{}".format(self.ligand) \
+                    +" -r ./data/{}/receptors/{}".format(self.mode, self.receptor) \
+                    + " -l ./data/{}/ligands/{}".format(self.mode, self.ligand) \
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
@@ -57,17 +57,15 @@ class DockEnv():
             f.close()
 
             my_command = "./smina.static --custom_scoring {}".format(obj_filename)\
-                    + " -r ./data/receptors/{}".format(self.receptor) \
-                    + " -l ./data/ligands/{}".format(self.ligand) \
+                    + " -r ./data/{}/receptors/{}".format(self.mode, self.receptor) \
+                    + " -l ./data/{}/ligands/{}".format(self.mode, self.ligand) \
                     + " --autobox_ligand {}".format(self.ligand) \
                     + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
                     + " -q" 
 
         #import pdb; pdb.set_trace()
-        print("ligand is ", self.ligand) 
         os.system(my_command)
-        print("return from os.system call to smina") 
 
     
     def get_rmsd(self, worker_idx=None):
@@ -78,7 +76,7 @@ class DockEnv():
             redock_fn = "./output/{}-redocking{}.pdbqt".format(self.ligand[0:4], worker_idx)
 
         f = open(redock_fn, 'r')
-        f_gt = open("./data/ligands/{}".format(self.ligand), 'r')
+        f_gt = open("./data/{}/ligands/{}".format(self.mode, self.ligand), 'r')
     
         stop = False
         rsd = 0.0
@@ -88,7 +86,6 @@ class DockEnv():
         
         comp = f.readline().split() 
 
-        print("read through to ATOMs")
         while ("ATOM" not in gt) or ('1' not in gt):
             gt = f_gt.readline().split()
         while ("ATOM" not in comp) or ('1' not in comp):
@@ -96,7 +93,6 @@ class DockEnv():
 
 
         #while not stop:
-        print("loop through and compute rsds")
         for gt_line, comp_line in zip(f_gt.readlines(), f.readlines()):
 
             gt = gt_line.split()
@@ -112,13 +108,11 @@ class DockEnv():
 #            if count > 0 and "TORSDOF" in gt:
 #                stop = True
 
-        print(" div by count to get rmsd")
         rmsd = rsd / count
 
         f.close()
         f_gt.close()
 
-        print("about to return rmsd")
 
         return rmsd
 
@@ -172,12 +166,10 @@ class DockEnv():
 
         self.run_docking(action, idx=worker_idx)
 
-        print("get rmsd")
         rmsd = self.get_rmsd(worker_idx=worker_idx)
-        print("rmsd got")
 
         reward = - rmsd
-        # regularization
+        # regularization/
         l1_reg = 0.0 #1e-3
         l2_reg = 0.0 #1e-3
         reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
@@ -185,7 +177,6 @@ class DockEnv():
         obs = np.append(action, reward)
 
         self.steps += 1
-        print("reward calculated")
 
         if self.steps < self.max_steps:
             done = False
@@ -194,12 +185,15 @@ class DockEnv():
 
         info = {"rmsd": rmsd}
 
-        print("about to return from step")
         return obs, reward, done, info 
         
     def reset(self, test=False):
 
         self.steps = 0
+        if test:
+            self.mode = "test"
+        else:
+            self.mode = "train"
 
         if test:
             self.ligand = np.random.choice(self.ligands_test_dir, \

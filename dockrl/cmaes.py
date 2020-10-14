@@ -330,7 +330,7 @@ class CMAES():
         num_docks = 50
 
         for ii in range(num_docks):
-            obs = self.env.reset()
+            obs = self.env.reset(test=True)
             action = self.get_agent_action(obs, 0, elite=True)
             obs, reward, done, info = self.env.step(action)
             action = self.get_agent_action(obs, 0, elite=True)
@@ -343,6 +343,7 @@ class CMAES():
 
         print("Average rmsd over {} runs with cmaes optimized weights = {:.3f}"\
                 .format(num_docks, rmsd))
+        print("Scoring function weights:  \n", action)
 
         return rmsd
 
@@ -388,7 +389,7 @@ if __name__ == "__main__":
         rmsd_esben = cmaes.env.get_esben_rmsd()
         optim_rmsd = cmaes.evaluate_rmsd()
 
-        print("rmsd for default, cma-es, Esben's scoring weights = {:.2e}, {:.2e}, {:.2e}"\
+        print("rmsd for default, Bjerrum's, and cma-es scoring weights = {:.2e}, {:.2e}, {:.2e}"\
                 .format(rmsd_default, rmsd_esben, optim_rmsd))
 
     print("end for rank ", rank)
