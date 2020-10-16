@@ -13,6 +13,7 @@ from copy import deepcopy
 from dockrl.policies import MRNN, Params
 from dockrl.dock_env import DockEnv
 
+import pdb
 import os
 import sys
 import subprocess
@@ -55,16 +56,17 @@ class CMAES():
         return action
 
     
-    def get_fitness(self, agent_idx, worker_idx=None, epds=8):
+    def get_fitness(self, agent_idx, worker_idx=None, epds=11):
 
         fitness = []
         sum_rewards = []
+        rmsd = []
         total_steps = 0
 
         for epd in range(epds):
             self.population[agent_idx].reset()
 
-            obs = self.env.reset()
+            obs = self.env.reset(sample_idx=epd)
             done = False
             sum_reward = 0.0
             while not done:
@@ -77,10 +79,12 @@ class CMAES():
 
                 sum_reward += reward
                 total_steps += 1
+                rmsd.append(info["rmsd"])
 
             sum_rewards.append(sum_reward)
 
-        fitness = np.sum(sum_rewards)
+        fitness = np.mean(sum_rewards)
+        info["rmsd"] = np.mean(rmsd)
 
         return fitness, total_steps, info
 
@@ -133,6 +137,7 @@ class CMAES():
 
             self.population[ll].set_params(params)
 
+
     def mpi_fork(self, n):
         """
         relaunches the current script with workers
@@ -156,9 +161,10 @@ class CMAES():
                     )
             print( ["mpirun", "-np", str(n), sys.executable] + sys.argv)
             subprocess.check_call(["mpirun", "-np", str(n), sys.executable] \
-            +['-u']+ sys.argv, env=env)
+                +['-u']+ sys.argv, env=env)
 
             return "parent"
+            rank = 0
         else:
             num_worker = comm.Get_size()
             rank = comm.Get_rank()
@@ -187,7 +193,8 @@ class CMAES():
                 "total_env_interacts": [],\
                 "rmsd_mean": [],\
                 "rmsd_min": [],\
-                "rmsd_sd": []}
+                "rmsd_sd": [],\
+                "generation": []}
 
 
         t0 = time.time()
@@ -257,6 +264,7 @@ class CMAES():
 
                     fitness, steps, info = self.get_fitness(agent_idx)
                     fitness_list.append(fitness)
+
                     rmsd.append(info["rmsd"])
 
                     self.total_env_interacts += steps
@@ -281,6 +289,7 @@ class CMAES():
             fitness_log["rmsd_min"].append(np.min(rmsd))
             fitness_log["rmsd_mean"].append(np.mean(rmsd))
             fitness_log["rmsd_sd"].append(np.std(rmsd))
+            fitness_log["generation"].append(gen)
 
             np.save(exp_id, fitness_log)
 
@@ -296,7 +305,6 @@ class CMAES():
             if params_list == 0:
                 print("worker {} shutting down".format(rank))
                 break
-            
             
             if self.population_size < len(params_list):
                 print("This should be unreachable (pop_size)")
@@ -324,20 +332,22 @@ class CMAES():
             comm.send([fitness_sublist, total_substeps, info_sublist], dest=0)
             
 
-    def evaluate_rmsd(self):
+    def evaluate_rmsd(self, mode="test"):
         
         rmsd = 0.0
         num_docks = 50
 
         for ii in range(num_docks):
-            obs = self.env.reset(test=True)
+
+            obs = self.env.reset(test=(mode == "test"))
             action = self.get_agent_action(obs, 0, elite=True)
             obs, reward, done, info = self.env.step(action)
-            action = self.get_agent_action(obs, 0, elite=True)
+            #action = self.get_agent_action(obs, 0, elite=True)
 
             self.env.run_docking(action)
 
-            rmsd += self.env.get_rmsd()
+            rmsd_temp = self.env.get_rmsd()
+            rmsd += rmsd_temp 
 
         rmsd /= num_docks
 
@@ -380,17 +390,28 @@ if __name__ == "__main__":
     pop_size = args.population_size
     max_generations= args.max_generations
 
+
     cmaes = DirectCMAES(policy_fn=Params, env_fn=DockEnv, num_workers=num_workers,\
             pop_size=pop_size, dim_in=7, dim_act=6)
     cmaes.train(max_generations=max_generations)
+    
 
-    if rank == 0:
-        rmsd_default = cmaes.env.get_default_rmsd()
-        rmsd_esben = cmaes.env.get_esben_rmsd()
-        optim_rmsd = cmaes.evaluate_rmsd()
+    try:
+        if rank == 0:
+            rmsd_default_train = cmaes.env.get_default_rmsd(mode="train")
+            rmsd_esben_train = cmaes.env.get_bjerrum_rmsd(mode="train")
+            optim_rmsd_train = cmaes.evaluate_rmsd(mode="train")
 
-        print("rmsd for default, Bjerrum's, and cma-es scoring weights = {:.2e}, {:.2e}, {:.2e}"\
-                .format(rmsd_default, rmsd_esben, optim_rmsd))
+            rmsd_default_test = cmaes.env.get_default_rmsd(mode="test")
+            rmsd_esben_test = cmaes.env.get_bjerrum_rmsd(mode="test")
+            optim_rmsd_test = cmaes.evaluate_rmsd(mode="test")
+
+            print("(train) rmsd default, Bjerrum's, and cma-es = {:.2e}, {:.2e}, {:.2e}"\
+                    .format(rmsd_default_train, rmsd_esben_train, optim_rmsd_train))
+            print("(test) rmsd default, Bjerrum's, and cma-es = {:.2e}, {:.2e}, {:.2e}"\
+                    .format(rmsd_default_test, rmsd_esben_test, optim_rmsd_test))
+    except: 
+        pass
 
     print("end for rank ", rank)
 

@@ -4,7 +4,9 @@ import torch.nn.functional as F
 
 import numpy as np
 
+import time
 import os 
+from subprocess import check_output
 
 class DockEnv():
 
@@ -26,6 +28,8 @@ class DockEnv():
 
         assert self.ligand is not None, "should be unreachable, call env.reset() first"
 
+
+#        try: 
         if idx is None:
             obj_filename = "dock.score"
             output_filename =  "./output/{}-redocking.pdbqt".format(self.ligand[0:4]) 
@@ -38,11 +42,12 @@ class DockEnv():
             my_command = "./smina.static"\
                     +" -r ./data/{}/receptors/{}".format(self.mode, self.receptor) \
                     + " -l ./data/{}/ligands/{}".format(self.mode, self.ligand) \
-                    + " --autobox_ligand {}".format(self.ligand) \
-                    + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
+                    + " --autobox_ligand ./data/{}/ligands/{}".format(self.mode, self.ligand) \
+                    + " --autobox_add 8 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
                     + " -q" 
         else:
+            #action = np.tanh(action)
             f = open(obj_filename,'w')
 
             my_scoring_weights = "{:.8f} gauss(o=0,_w=0.5,_c=8)\n".format(action[0])\
@@ -59,22 +64,39 @@ class DockEnv():
             my_command = "./smina.static --custom_scoring {}".format(obj_filename)\
                     + " -r ./data/{}/receptors/{}".format(self.mode, self.receptor) \
                     + " -l ./data/{}/ligands/{}".format(self.mode, self.ligand) \
-                    + " --autobox_ligand {}".format(self.ligand) \
-                    + " --autobox_add 4 --exhaustiveness {}".format(self.exhaustiveness) \
+                    + " --autobox_ligand ./data/{}/ligands/{}".format(self.mode, self.ligand) \
+                    + " --autobox_add 8 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
                     + " -q" 
 
-        #import pdb; pdb.set_trace()
-        os.system(my_command)
+        #os.system(my_command)
+        try:
+            temp = check_output(my_command.split(), timeout=45)
+        except:
+            print(my_command.splitlines())
+            print("timeout occured, attempting again")
+            self.run_docking(action=action, idx=idx)
+        
+        #check if autodock program output a blank pdbqt file
+        f = open(output_filename, 'r')
+        f_lines = f.readlines()
+        f.close()
 
+        if len(f_lines) == 0:
+            
+            print(my_command.splitlines())
+            print("sim output blank file, attempting to run again")
+            self.run_docking(action=action, idx=idx)
     
     def get_rmsd(self, worker_idx=None):
 
+        #try: 
         if worker_idx is None:
             redock_fn = "./output/{}-redocking.pdbqt".format(self.ligand[0:4])
         else:
             redock_fn = "./output/{}-redocking{}.pdbqt".format(self.ligand[0:4], worker_idx)
 
+        
         f = open(redock_fn, 'r')
         f_gt = open("./data/{}/ligands/{}".format(self.mode, self.ligand), 'r')
     
@@ -82,50 +104,77 @@ class DockEnv():
         rsd = 0.0
         count = 0
 
-        gt = f_gt.readline().split()
-        
-        comp = f.readline().split() 
+        gt_lines = f_gt.readlines()
+        comp_lines= f.readlines() 
 
-        while ("ATOM" not in gt) or ('1' not in gt):
-            gt = f_gt.readline().split()
-        while ("ATOM" not in comp) or ('1' not in comp):
-            comp = f.readline().split()
+        
+#            while ("ATOM" not in gt) or ('1' not in gt):
+#                gt = f_gt.readline().split()
+#            while ("ATOM" not in comp) or ('1' not in comp):
+#                comp = f.readline().split()
 
 
         #while not stop:
-        for gt_line, comp_line in zip(f_gt.readlines(), f.readlines()):
+        old_jj = 0
+        for ii in range(len(gt_lines)): #gt_line, comp_line in zip(f_gt.readlines(), f.readlines()):
 
-            gt = gt_line.split()
-            comp = comp_line.split()
+            try:
+                if "ATOM" in gt_lines[ii]:
+                    gt = gt_lines[ii].split()
 
-            if len(gt) >= 12:
-                count += 1
-                coords_gt = np.array([float(elem) for elem in gt[5:8]])
-                coords_comp = np.array([float(elem) for elem in comp[5:8]])
+                    for jj in range(old_jj, len(comp_lines)):
+                        if "ATOM" in comp_lines[jj]:
+                            comp = comp_lines[jj].split()
 
-                rsd += np.sum(np.sqrt((coords_gt - coords_comp)**2))
+                            if comp[1] == gt[1]:
+                                count += 1
+                                coords_gt = np.array([float(elem) for elem in gt[5:8]])
+                                coords_comp = np.array([float(elem) for elem in comp[5:8]])
+
+                                rsd += np.sum(np.sqrt((coords_gt - coords_comp)**2))
+                                old_jj = jj
+                            elif jj == (len(comp_lines)-1):
+                                print("matching atom not found in output file")
+            except:
+                import pdb; pdb.set_trace()
+                    
+
 
 #            if count > 0 and "TORSDOF" in gt:
 #                stop = True
 
-        rmsd = rsd / count
+        if count > 0:
+            rmsd = rsd / count
+        else: 
+            print("mismatch in output/reference ligands? rerun docking with default params") 
+            print(self.ligand, redock_fn)
+            self.run_docking(idx=worker_idx)
+
+            rmsd = self.get_rmsd(worker_idx=worker_idx)
+            #rmsd = 20.0
 
         f.close()
         f_gt.close()
 
+        #except:
+        #print("there's been a problem calculating rmsd")
+        #rmsd = 10.0
 
         return rmsd
 
-    def get_default_rmsd(self):
+    def get_default_rmsd(self, mode="test"):
 
         rmsd = 0.0
         num_docks = 50
         for ii in range(num_docks):
             
-            _ = self.reset(test=True)
+            _ = self.reset(test=(mode == "test"))
             self.run_docking(action=None)
 
-            rmsd += self.get_rmsd()
+            rmsd_temp = self.get_rmsd()
+            
+            rmsd += rmsd_temp 
+
 
         rmsd /= num_docks
 
@@ -134,7 +183,7 @@ class DockEnv():
 
         return rmsd
 
-    def get_esben_rmsd(self):
+    def get_bjerrum_rmsd(self, mode="test"):
 
 
         rmsd = 0.0
@@ -147,14 +196,15 @@ class DockEnv():
                 0.366584,\
                 0.0])
         for ii in range(num_docks):
-            _ = self.reset(test=True)
+            _ = self.reset(test=(mode == "test"))
             self.run_docking(action)
 
-            rmsd += self.get_rmsd()
+            rmsd_temp = self.get_rmsd()
+            rmsd += rmsd_temp 
 
         rmsd /= num_docks
 
-        print("Average rmsd over {} runs with weighting from Esben et al. 2016 = {:.3f}"\
+        print("Average rmsd over {} runs with weighting from (Bjerrum 2016) = {:.3f}"\
                 .format(num_docks, rmsd))
 
         return rmsd
@@ -168,10 +218,13 @@ class DockEnv():
 
         rmsd = self.get_rmsd(worker_idx=worker_idx)
 
-        reward = - rmsd
+        # an rmsd of less than 2.0 angstroms is generally considered "accurate"
+        #reward = 10.0 if rmsd <= 2.0 else -rmsd
+        reward = -rmsd
+
         # regularization/
-        l1_reg = 0.0 #1e-3
-        l2_reg = 0.0 #1e-3
+        l1_reg = 0.0 #1e-1
+        l2_reg = 0.0# 1e-1
         reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
 
         obs = np.append(action, reward)
@@ -183,11 +236,12 @@ class DockEnv():
         else:
             done = True
 
+
         info = {"rmsd": rmsd}
 
         return obs, reward, done, info 
         
-    def reset(self, test=False):
+    def reset(self, test=False, sample_idx=None):
 
         self.steps = 0
         if test:
@@ -203,8 +257,11 @@ class DockEnv():
                     self.receptor = receptor
                     break
         else:
-            self.ligand = np.random.choice(self.ligands_dir, \
-                    p=[1/len(self.ligands_dir) for elem in self.ligands_dir])
+            if sample_idx is None:
+                self.ligand = np.random.choice(self.ligands_dir, \
+                        p=[1/len(self.ligands_dir) for elem in self.ligands_dir])
+            else:
+                self.ligand = self.ligands_dir[sample_idx]
             for receptor in self.receptors_dir:
                 if self.ligand[0:4] in receptor:
                     self.receptor = receptor
@@ -238,7 +295,7 @@ if __name__ == "__main__":
     done = False
     reward_sum = 0.0
 
-    env.get_esben_rmsd()
+    env.get_bjerrum_rmsd()
     env.get_default_rmsd()
 
     import pdb; pdb.set_trace()
@@ -248,4 +305,3 @@ if __name__ == "__main__":
         reward_sum += reward
 
     print("cumulative reward: {}".format(reward_sum))
-
