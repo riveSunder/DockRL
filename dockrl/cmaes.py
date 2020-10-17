@@ -202,6 +202,9 @@ class CMAES():
 
         for gen in range(max_generations+1):
 
+            np.save("distribution_{}.npy".format(exp_id[7:-4]),\
+                    self.distributioni[0], self.distribution[1])
+
             if gen > 0:
                 # receive parameters from workers (skip on first pass)
 
