@@ -1,0 +1,16 @@
+cmaes exp. pop size: 84, generations: 20, cpu workers: 13 
+
+(train) rmsd default, Bjerrum's = 5.75, 8.74
+(test) rmsd default, Bjerrum's = 3.22, 5.03
+(train) champions 0-3 scores: 4.92, 5.49, 4.83, 5.16
+
+(test) champions 0-3 scores: 6.54, 6.97, 6.54, 7.42
+
+
+champion 0 params[ 0.86030765 -0.22638877  2.80786698 -1.30804956  2.95815515 -0.9737103 ]
+
+champion 1 params[ 1.52885428 -0.80799741  3.39175208 -1.89033777  3.54156745 -1.55616689]
+
+champion 2 params[ 1.00245422 -0.41628406  3.00158739 -1.49842547  3.1520491  -1.16402611]
+
+champion 3 params[ 0.97804152 -0.30462964  2.88951414 -1.38691413  3.03962265 -1.05280124]
