@@ -20,7 +20,7 @@ class DockEnv():
         
         self.ligand = None
         self.receptor = None
-        self.exhaustiveness = 1
+        self.exhaustiveness = 3
         self.max_steps = 1
 
 
@@ -71,7 +71,7 @@ class DockEnv():
 
         #os.system(my_command)
         try:
-            temp = check_output(my_command.split(), timeout=45)
+            temp = check_output(my_command.split(), timeout=60)
         except:
             print(my_command.splitlines())
             print("timeout occured, attempting again")
@@ -166,9 +166,12 @@ class DockEnv():
 
         rmsd = 0.0
         num_docks = 50
+
+        num_samples = len(self.ligands_test_dir) if mode=="test" else len(self.ligands_dir)
         for ii in range(num_docks):
             
-            _ = self.reset(test=(mode == "test"))
+            #_ = self.reset(test=(mode == "test"))
+            _ = self.reset(test=(mode == "test"), sample_idx=ii % num_samples)
             self.run_docking(action=None)
 
             rmsd_temp = self.get_rmsd()
@@ -195,8 +198,12 @@ class DockEnv():
                 -0.431416,\
                 0.366584,\
                 0.0])
+
+        num_samples = len(self.ligands_test_dir) if mode=="test" else len(self.ligands_dir)
         for ii in range(num_docks):
-            _ = self.reset(test=(mode == "test"))
+            
+            #_ = self.reset(test=(mode == "test"))
+            _ = self.reset(test=(mode == "test"), sample_idx=ii % num_samples)
             self.run_docking(action)
 
             rmsd_temp = self.get_rmsd()
@@ -250,38 +257,24 @@ class DockEnv():
             self.mode = "train"
 
         if test:
-            self.ligand = np.random.choice(self.ligands_test_dir, \
-                    p=[1/len(self.ligands_test_dir) for elem in self.ligands_test_dir])
-            for receptor in self.receptors_test_dir:
-                if self.ligand[0:4] in receptor:
-                    self.receptor = receptor
-                    break
+            my_ligands_dir = self.ligands_test_dir
+            my_receptors_dir = self.receptors_test_dir
+        else: 
+            my_ligands_dir = self.ligands_dir
+            my_receptors_dir = self.receptors_dir
+
+        if sample_idx is None:
+            self.ligand = np.random.choice(my_ligands_dir, \
+                    p=[1/len(my_ligands_dir) for elem in my_ligands_dir])
         else:
-            if sample_idx is None:
-                self.ligand = np.random.choice(self.ligands_dir, \
-                        p=[1/len(self.ligands_dir) for elem in self.ligands_dir])
-            else:
-                self.ligand = self.ligands_dir[sample_idx]
-            for receptor in self.receptors_dir:
-                if self.ligand[0:4] in receptor:
-                    self.receptor = receptor
-                    break
-        
+            self.ligand = my_ligands_dir[sample_idx]
 
-        if (0):
-            action = np.array([-0.0460161,\
-                    -0.000384274,\
-                    -0.00812176,\
-                    -0.431416,\
-                    0.366584,\
-                    0.0])
+        for receptor in my_receptors_dir:
+            if self.ligand[0:4] in receptor:
+                self.receptor = receptor
+                break
 
-            self.run_docking(action)
-            rmsd = self.get_rmsd() 
-
-            obs = np.append(rmsd, action)
-        else:
-            obs = np.zeros((7))
+        obs = np.zeros((7))
 
         return obs
 

@@ -42,11 +42,16 @@ class CMAES():
     
         self.total_env_interacts = 0
 
+        self.champions = [None] * self.elite_keep
+        self.champion_fitness = [-float("Inf")] * self.elite_keep
+
     def get_agent_action(self, obs, agent_idx, elite=False):
 
         if elite:
             obs = obs.reshape(1, self.dim_in)
-            action = self.elite_pop[agent_idx].forward(obs)
+            action = self.champions[agent_idx].forward(obs)
+            #action = self.elite_pop[agent_idx].forward(obs)
+            #action = self.elite_pop[agent_idx].forward(obs)
         else:
             obs = obs.reshape(1, self.dim_in)
             action = self.population[agent_idx].forward(obs)
@@ -101,6 +106,15 @@ class CMAES():
 
             self.elite_pop.append(self.population[sorted_indices[jj]])
 
+            if sorted_fitness[jj] > self.champion_fitness[jj]:
+
+                #self.champions.insert(jj, deepcopy(self.elite_pop[-1]))
+                self.champions.insert(jj, self.population[sorted_indices[jj]])
+                self.champion_fitness.insert(jj, sorted_fitness[jj])
+
+                _ = self.champion_fitness.pop()
+                _ = self.champions.pop()
+
             if elite_params is None:
                 elite_params = self.population[sorted_indices[jj]].get_params()[np.newaxis,:]
             else:
@@ -122,7 +136,7 @@ class CMAES():
         covar = np.matmul((elite_params - self.distribution[0]).T,\
                 (elite_params - self.distribution[0]))
 
-        covar = np.clip(covar, -1e1, 1e1)
+        covar = np.clip(covar, -1e0, 1e0)
 
         var = np.mean( (elite_params - self.distribution[0])**2, axis=0)
 
@@ -185,7 +199,7 @@ class CMAES():
 
     def mantle(self, max_generations=10):
         
-        exp_id = "./logs/exp_log{}.npy".format(int(time.time())) 
+        self.exp_id = "./logs/exp_log{}.npy".format(int(time.time())) 
 
         fitness_log = {"max_fitness": [],\
                 "mean_fitness": [],\
@@ -202,8 +216,8 @@ class CMAES():
 
         for gen in range(max_generations+1):
 
-            np.save("distribution_{}.npy".format(exp_id[7:-4]),\
-                    self.distribution[0], self.distribution[1])
+            np.save("distribution_{}.npy".format(self.exp_id[7:-4]),\
+                    self.distribution[0], self.distribution[1])#  , self.champions, self.champion_fitness)
 
             if gen > 0:
                 # receive parameters from workers (skip on first pass)
@@ -294,7 +308,7 @@ class CMAES():
             fitness_log["rmsd_sd"].append(np.std(rmsd))
             fitness_log["generation"].append(gen)
 
-            np.save(exp_id, fitness_log)
+            np.save(self.exp_id, fitness_log)
 
         for cc in range(self.num_workers):
             comm.send(0, dest=cc)
@@ -335,15 +349,18 @@ class CMAES():
             comm.send([fitness_sublist, total_substeps, info_sublist], dest=0)
             
 
-    def evaluate_rmsd(self, mode="test"):
+    def evaluate_rmsd(self, mode="test", idx=0):
         
         rmsd = 0.0
         num_docks = 50
 
+        num_samples = len(self.env.ligands_test_dir) \
+                if mode=="test" else len(self.env.ligands_dir)
+
         for ii in range(num_docks):
 
-            obs = self.env.reset(test=(mode == "test"))
-            action = self.get_agent_action(obs, 0, elite=True)
+            obs = self.env.reset(test=(mode == "test"), sample_idx=ii % num_samples)
+            action = self.get_agent_action(obs, idx, elite=True)
             obs, reward, done, info = self.env.step(action)
             #action = self.get_agent_action(obs, 0, elite=True)
 
@@ -371,7 +388,8 @@ class DirectCMAES(CMAES):
     def get_agent_action(self, obs, agent_idx, elite=False):
 
         if elite:
-            action = self.elite_pop[agent_idx].forward(obs)
+            action = self.champions[0].forward(obs)
+            #self.elite_pop[agent_idx].forward(obs)
         else:
             action = self.population[agent_idx].forward(obs)
 
@@ -399,23 +417,58 @@ if __name__ == "__main__":
     cmaes.train(max_generations=max_generations)
     
 
-    try:
+    
+    if(1):
         if rank == 0:
             rmsd_default_train = cmaes.env.get_default_rmsd(mode="train")
             rmsd_esben_train = cmaes.env.get_bjerrum_rmsd(mode="train")
-            optim_rmsd_train = cmaes.evaluate_rmsd(mode="train")
+            optim0_rmsd_train = cmaes.evaluate_rmsd(mode="train", idx=0)
+            optim1_rmsd_train = cmaes.evaluate_rmsd(mode="train", idx=1)
+            optim2_rmsd_train = cmaes.evaluate_rmsd(mode="train", idx=2)
+            optim3_rmsd_train = cmaes.evaluate_rmsd(mode="train", idx=3)
 
             rmsd_default_test = cmaes.env.get_default_rmsd(mode="test")
             rmsd_esben_test = cmaes.env.get_bjerrum_rmsd(mode="test")
-            optim_rmsd_test = cmaes.evaluate_rmsd(mode="test")
+            optim0_rmsd_test = cmaes.evaluate_rmsd(mode="test", idx=0)
+            optim1_rmsd_test = cmaes.evaluate_rmsd(mode="test", idx=1)
+            optim2_rmsd_test = cmaes.evaluate_rmsd(mode="test", idx=2)
+            optim3_rmsd_test = cmaes.evaluate_rmsd(mode="test", idx=3)
 
             print("(train) rmsd default, Bjerrum's, and cma-es = {:.2e}, {:.2e}, {:.2e}"\
-                    .format(rmsd_default_train, rmsd_esben_train, optim_rmsd_train))
+                    .format(rmsd_default_train, rmsd_esben_train, optim0_rmsd_train))
             print("(test) rmsd default, Bjerrum's, and cma-es = {:.2e}, {:.2e}, {:.2e}"\
-                    .format(rmsd_default_test, rmsd_esben_test, optim_rmsd_test))
-    except: 
+                    .format(rmsd_default_test, rmsd_esben_test, optim0_rmsd_test))
+
+            arg_str = "cmaes exp. pop size: {}, generations: {}, cpu workers: {} \n\n"\
+                    .format(pop_size, max_generations, num_workers)
+
+
+
+            with open(cmaes.exp_id[:-4]+"_results.txt",'w') as f:
+                f.write(arg_str)
+
+                f.write("(train) rmsd default, Bjerrum's = {:.2f}, {:.2f}\n"\
+                    .format(rmsd_default_train, rmsd_esben_train))
+                f.write("(test) rmsd default, Bjerrum's = {:.2f}, {:.2f}\n"\
+                    .format(rmsd_default_test, rmsd_esben_test))
+
+                f.write("(train) champions 0-3 scores: {:.2f}, {:.2f}, {:.2f}, {:.2f}\n\n"\
+                    .format(optim0_rmsd_train, optim1_rmsd_train, \
+                            optim2_rmsd_train, optim3_rmsd_train))
+                f.write("(test) champions 0-3 scores: {:.2f}, {:.2f}, {:.2f}, {:.2f}\n\n"\
+                    .format(optim0_rmsd_test, optim1_rmsd_test, \
+                            optim2_rmsd_test, optim3_rmsd_test))
+                for ii in range(4):
+                    f.write("\nchampion {} params".format(ii))
+                    f.write(str(cmaes.population[ii].get_params()))
+                    f.write("\n")
+
+
+    else: 
+        print("computer words not working right")
         pass
 
+    
     print("end for rank ", rank)
 
     #cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
