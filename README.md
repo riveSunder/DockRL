@@ -12,4 +12,4 @@ Note that currently you need to copy the receptor and ligand `pdbqt` files from 
 
 ## Note About Multithreading
 
-Note that in order for Smina to take advantage of multiple cores, `--exhaustiveness` needs to be greater than or equal to the number of threads you want to use. Setting the `--cpu` flag to 32 and `--exhaustiveness` to 1 will only use one thread, for exmaple, but`--exhaustiveness 32 --cpu 16` will utilize 16 as intended. 
+Note that in order for Smina to take advantage of multiple cores, `--exhaustiveness` needs to be greater than or equal to the number of threads you want to use. Setting the `--cpu` flag to 32 and `--exhaustiveness` to 1 will only use one thread, for example, but`--exhaustiveness 32 --cpu 16` will utilize 16 as intended. 
