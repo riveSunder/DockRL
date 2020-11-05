@@ -20,7 +20,8 @@ class DockEnv():
         
         self.ligand = None
         self.receptor = None
-        self.exhaustiveness = 3
+        self.exhaustiveness = 4
+        self.smina_cpu = 4
         self.max_steps = 1
 
 
@@ -31,10 +32,10 @@ class DockEnv():
 
 #        try: 
         if idx is None:
-            obj_filename = "dock.score"
+            obj_filename = "./scoring/dock.score"
             output_filename =  "./output/{}-redocking.pdbqt".format(self.ligand[0:4]) 
         else:
-            obj_filename = "dock{}.score".format(idx)
+            obj_filename = "./scoring/dock{}.score".format(idx)
             output_filename =  "./output/{}-redocking{}.pdbqt"\
                     .format(self.ligand[0:4], idx) 
 
@@ -45,7 +46,7 @@ class DockEnv():
                     + " --autobox_ligand ./data/{}/ligands/{}".format(self.mode, self.ligand) \
                     + " --autobox_add 8 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
-                    + " -q" 
+                    + " -q --cpu {}".format(self.smina_cpu) 
         else:
             #action = np.tanh(action)
             f = open(obj_filename,'w')
@@ -67,7 +68,7 @@ class DockEnv():
                     + " --autobox_ligand ./data/{}/ligands/{}".format(self.mode, self.ligand) \
                     + " --autobox_add 8 --exhaustiveness {}".format(self.exhaustiveness) \
                     + " -o {}".format(output_filename)\
-                    + " -q" 
+                    + " -q --cpu {}".format(self.smina_cpu) 
 
         #os.system(my_command)
         try:

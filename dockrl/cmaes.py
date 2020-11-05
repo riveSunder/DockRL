@@ -38,7 +38,7 @@ class CMAES():
                 for ii in range(self.population_size)]
 
         self.distribution = [np.zeros((self.population[0].num_params)),\
-                np.eye(self.population[0].num_params)]
+                0.1*np.eye(self.population[0].num_params)]
     
         self.total_env_interacts = 0
 
