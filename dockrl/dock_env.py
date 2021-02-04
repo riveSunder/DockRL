@@ -23,7 +23,20 @@ class DockEnv():
         self.exhaustiveness = 4
         self.smina_cpu = 4
         self.max_steps = 1
+        self.chnops_tokens = self.atom_tokens()
 
+
+    def atom_tokens(self, my_seed=13):
+        np.random.seed(my_seed)
+        token_length = 4
+
+        tokens = {}
+
+        for my_key in "CHNOPS":
+            tokens[my_key] = np.random.randn(token_length)
+
+
+        return tokens
 
     def run_docking(self, action=None, idx=None):
 
@@ -235,7 +248,8 @@ class DockEnv():
         l2_reg = 0.0# 1e-1
         reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
 
-        obs = np.append(action, reward)
+        obs = self.nodes
+        #np.append(action, reward)
 
         self.steps += 1
 
@@ -244,11 +258,59 @@ class DockEnv():
         else:
             done = True
 
-
-        info = {"rmsd": rmsd}
+        info = {"rmsd": rmsd, "action": action}
 
         return obs, reward, done, info 
         
+    def parse_pdbqt(self):
+
+        if self.mode == "train":
+            directory = "./data/train/ligands/"
+        else:
+            directory = "./data/test/ligands/"
+
+        raw_nodes = []
+        nodes = np.array([])
+        temp = ""
+
+        with open(directory + self.ligand) as f:
+            my_axis = None
+            while "TORSDOF" not in temp:
+
+                temp = f.readline()
+
+                if "ATOM" in temp:
+                    raw_nodes.append([self.ligand])
+                    raw_nodes[-1].extend(temp.split())
+                
+                    # add atom positions
+                    my_node = np.array(raw_nodes[-1][6:9], dtype=np.float) 
+                    
+                    for my_key in self.chnops_tokens.keys():
+                        if my_key in raw_nodes[-1][3]:
+                            token = self.chnops_tokens[my_key]
+
+                    my_node = np.append(my_node, token)
+
+                    nodes = np.append(nodes,\
+                            my_node.reshape(1, my_node.shape[0]), axis=my_axis)
+
+                    my_axis = 0
+
+                    if len(nodes.shape) < 2:
+                        nodes = nodes[np.newaxis,:] 
+
+            mean_x = np.mean(nodes[:,0])
+            mean_y = np.mean(nodes[:,1])
+            mean_z = np.mean(nodes[:,2])
+
+            nodes[:,0] -= mean_x
+            nodes[:,1] -= mean_y
+            nodes[:,2] -= mean_z
+
+        self.raw_nodes = raw_nodes
+        self.nodes = nodes
+
     def reset(self, test=False, sample_idx=None):
 
         self.steps = 0
@@ -275,7 +337,8 @@ class DockEnv():
                 self.receptor = receptor
                 break
 
-        obs = np.zeros((7))
+        self.parse_pdbqt()
+        obs = self.nodes
 
         return obs
 
@@ -289,10 +352,9 @@ if __name__ == "__main__":
     done = False
     reward_sum = 0.0
 
-    env.get_bjerrum_rmsd()
-    env.get_default_rmsd()
+    #env.get_bjerrum_rmsd()
+    #env.get_default_rmsd()
 
-    import pdb; pdb.set_trace()
     while not done:
         obs, reward, done, info = env.step(np.random.randn(6))
 
