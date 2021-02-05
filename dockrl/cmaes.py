@@ -10,7 +10,7 @@ import numpy as np
 from collections import OrderedDict
 from copy import deepcopy
 
-from dockrl.policies import MRNN, Params
+from dockrl.policies import MRNN, Params, GraphNN
 from dockrl.dock_env import DockEnv
 
 import pdb
@@ -47,21 +47,14 @@ class CMAES():
 
     def get_agent_action(self, obs, agent_idx, elite=False):
 
-        if elite:
-            obs = obs.reshape(1, self.dim_in)
-            action = self.champions[agent_idx].forward(obs)
-            #action = self.elite_pop[agent_idx].forward(obs)
-            #action = self.elite_pop[agent_idx].forward(obs)
-        else:
-            obs = obs.reshape(1, self.dim_in)
-            action = self.population[agent_idx].forward(obs)
+        action = self.population[agent_idx].get_actions(obs)
 
         action = action.detach().numpy().squeeze()
 
         return action
 
     
-    def get_fitness(self, agent_idx, worker_idx=None, epds=11):
+    def get_fitness(self, agent_idx, worker_idx=None, epds=32):
 
         fitness = []
         sum_rewards = []
@@ -71,7 +64,7 @@ class CMAES():
         for epd in range(epds):
             self.population[agent_idx].reset()
 
-            obs = self.env.reset(sample_idx=epd)
+            obs = self.env.reset()
             done = False
             sum_reward = 0.0
             while not done:
@@ -352,7 +345,7 @@ class CMAES():
     def evaluate_rmsd(self, mode="test", idx=0):
         
         rmsd = 0.0
-        num_docks = 50
+        num_docks = 16
 
         num_samples = len(self.env.ligands_test_dir) \
                 if mode=="test" else len(self.env.ligands_dir)
@@ -374,6 +367,7 @@ class CMAES():
         print("Average rmsd over {} runs with cmaes optimized weights = {:.3f}"\
                 .format(num_docks, rmsd))
         print("Scoring function weights:  \n", action)
+        
 
         return rmsd
 
@@ -404,6 +398,10 @@ if __name__ == "__main__":
             help="size of evo population")
     parser.add_argument("-g", "--max_generations", type=int, default=1,\
             help="total number of generations to train")
+    parser.add_argument("-pi", "--policy", type=str, default="Params",\
+            help="which policy to use")
+
+    
 
     args = parser.parse_args()
 
@@ -411,12 +409,18 @@ if __name__ == "__main__":
     pop_size = args.population_size
     max_generations= args.max_generations
 
+    #my_policy_fn = Params
+    if "graphnn" in args.policy.lower():
+        my_policy_fn = GraphNN
+        my_cmaes = CMAES
+    elif "params" in args.policy.lower():
+        my_policy_fn = Params
+        my_cmaes = DirectCMAES
 
-    cmaes = DirectCMAES(policy_fn=Params, env_fn=DockEnv, num_workers=num_workers,\
+    cmaes = my_cmaes(policy_fn=my_policy_fn, env_fn=DockEnv, num_workers=num_workers,\
             pop_size=pop_size, dim_in=7, dim_act=6)
     cmaes.train(max_generations=max_generations)
     
-
     
     if(1):
         if rank == 0:
@@ -427,6 +431,7 @@ if __name__ == "__main__":
             optim2_rmsd_train = cmaes.evaluate_rmsd(mode="train", idx=2)
             optim3_rmsd_train = cmaes.evaluate_rmsd(mode="train", idx=3)
 
+            print("test")
             rmsd_default_test = cmaes.env.get_default_rmsd(mode="test")
             rmsd_esben_test = cmaes.env.get_bjerrum_rmsd(mode="test")
             optim0_rmsd_test = cmaes.evaluate_rmsd(mode="test", idx=0)

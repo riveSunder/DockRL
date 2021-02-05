@@ -179,7 +179,7 @@ class DockEnv():
     def get_default_rmsd(self, mode="test"):
 
         rmsd = 0.0
-        num_docks = 50
+        num_docks = 16
 
         num_samples = len(self.ligands_test_dir) if mode=="test" else len(self.ligands_dir)
         for ii in range(num_docks):
@@ -204,7 +204,7 @@ class DockEnv():
 
 
         rmsd = 0.0
-        num_docks = 50
+        num_docks = 16
 
         action = np.array([-0.0460161,\
                 -0.000384274,\
@@ -246,6 +246,7 @@ class DockEnv():
         # regularization/
         l1_reg = 0.0 #1e-1
         l2_reg = 0.0# 1e-1
+
         reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
 
         obs = self.nodes
