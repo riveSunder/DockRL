@@ -20,11 +20,14 @@ class DockEnv():
         
         self.ligand = None
         self.receptor = None
-        self.exhaustiveness = 4
-        self.smina_cpu = 4
+        self.exhaustiveness = 8
+        self.smina_cpu = 8
         self.max_steps = 1
         self.chnops_tokens = self.atom_tokens()
 
+        self.l1_reg = 0.#1e-1
+        self.l2_reg = 0. #1e-1
+        self.lsup_reg = 1.0
 
     def atom_tokens(self, my_seed=13):
         np.random.seed(my_seed)
@@ -174,6 +177,10 @@ class DockEnv():
         #print("there's been a problem calculating rmsd")
         #rmsd = 10.0
 
+        if np.isnan(rmsd):
+            print("warning, nan detected (!)")
+            pass
+
         return rmsd
 
     def get_default_rmsd(self, mode="test"):
@@ -243,11 +250,15 @@ class DockEnv():
         #reward = 10.0 if rmsd <= 2.0 else -rmsd
         reward = -rmsd
 
-        # regularization/
-        l1_reg = 0.0 #1e-1
-        l2_reg = 0.0# 1e-1
+        # regularization of the action (scoring function weights)
+        l1 = np.mean(np.abs(action))
+        l2 = np.mean(np.abs(action)**2)
+        lsup = np.max(np.abs(action))
 
-        reward -= l1_reg * np.sum(np.abs(action)) + l2_reg * np.sum(np.abs(action**2))
+
+        reward -= (self.l1_reg * l1 \
+                + self.l2_reg * l2 \
+                + self.lsup_reg * lsup)
 
         obs = self.nodes
         #np.append(action, reward)
