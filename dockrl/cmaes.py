@@ -37,6 +37,7 @@ class CMAES():
         self.population = [policy_fn(dim_in, dim_act) \
                 for ii in range(self.population_size)]
 
+        self.lr = 1.e0
         self.distribution = [np.zeros((self.population[0].num_params)),\
                 0.1*np.eye(self.population[0].num_params)]
     
@@ -54,7 +55,7 @@ class CMAES():
         return action
 
     
-    def get_fitness(self, agent_idx, worker_idx=None, epds=32):
+    def get_fitness(self, agent_idx, worker_idx=None, epds=11):
 
         fitness = []
         sum_rewards = []
@@ -64,7 +65,7 @@ class CMAES():
         for epd in range(epds):
             self.population[agent_idx].reset()
 
-            obs = self.env.reset()
+            obs = self.env.reset(sample_idx = epd % 11)
             done = False
             sum_reward = 0.0
             while not done:
@@ -82,6 +83,11 @@ class CMAES():
             sum_rewards.append(sum_reward)
 
         fitness = np.mean(sum_rewards)
+
+        if np.isnan(fitness):
+            print("warning, nan detected (!)")
+            pass
+
         info["rmsd"] = np.mean(rmsd)
 
         return fitness, total_steps, info
@@ -118,31 +124,50 @@ class CMAES():
 
         temp_params =  np.copy(elite_params)
         
-        for kk in range(self.elite_keep, self.population_size):
+        for kk in range(self.population_size):
 
             temp_params = np.append(temp_params,\
                     self.population[kk].get_params()[np.newaxis,:],\
                     axis=0)
 
         params_mean = np.mean(elite_params, axis=0)
+        pop_mean = np.mean(temp_params, axis=0)
 
-        covar = np.matmul((elite_params - self.distribution[0]).T,\
+        covar = (1./self.elite_keep) *  np.matmul((elite_params - self.distribution[0]).T,\
                 (elite_params - self.distribution[0]))
 
-        covar = np.clip(covar, -1e0, 1e0)
+        if (0): #self.check_pd(covar):
+            print("covariance is not positive semi-definite, finding nearest pd matrix")
+            covar = self.get_nearest_pd(covar)
 
-        var = np.mean( (elite_params - self.distribution[0])**2, axis=0)
+        var =  np.mean((elite_params - self.distribution[0])**2, axis=0)
 
-        covar_matrix = covar # + np.diag(var)
+        covar_matrix = covar  
 
+        params_mean = self.lr * params_mean + (1-self.lr) * self.distribution[0]
+        covar = self.lr * covar + (1-self.lr) * self.distribution[1]
+
+        params_mean = np.clip(params_mean, -5e0, 5e0)
+        covar = np.clip(covar, -5e0, 5e0)
+
+        #covar = np.eye(covar.shape[0]) * 1e-1
         self.distribution = [params_mean, \
                 covar_matrix]
 
-        for ll in range(self.population_size):
-            params = np.random.multivariate_normal(self.distribution[0],\
-                    self.distribution[1])
+        use_elitism = True
+        if np.mean(temp_params) > 32:
+            import pdb; pdb.set_trace()
 
-            self.population[ll].set_params(params)
+        for ll in range(self.population_size):
+
+            if use_elitism and ll < self.elite_keep:
+                self.population[ll].set_params(self.champions[ll].get_params())
+            else:
+
+                params = np.random.multivariate_normal(self.distribution[0],\
+                        self.distribution[1])
+
+                self.population[ll].set_params(params)
 
 
     def mpi_fork(self, n):
@@ -190,6 +215,41 @@ class CMAES():
         else:
             self.arm(max_generations)
 
+    def check_pd(self, my_matrix):
+
+        try:
+            temp = np.linalg.cholesky(my_matrix)
+            return True
+        except:
+            return False
+
+    def get_nearest_pd(self, my_matrix):
+
+        temp_matrix = (my_matrix + my_matrix.T) / 2
+        _, s, v = np.linalg.svd(temp_matrix)
+
+        hermitian = np.dot(v.T, np.dot(np.diag(s), v))
+
+        matrix_2 = (temp_matrix + hermitian) / 2
+
+        matrix_3 = (matrix_2 + matrix_2.T) / 2
+
+        if self.check_pd(matrix_3):
+            return matrix_3
+
+        eye_matrix = np.eye(my_matrix.shape[0])
+
+        count = 1
+        spacing = np.spacing(np.linalg.norm(my_matrix))
+
+
+        while not(self.check_pd(matrix_3)):
+            min_eig = np.min(np.real(np.linalg.eigvals(matrix_3)))
+            matrix_3 += eye_matrix * (-min_eig * count**2 + spacing )
+            count += 1
+
+        return matrix_3
+
     def mantle(self, max_generations=10):
         
         self.exp_id = "./logs/exp_log{}.npy".format(int(time.time())) 
@@ -209,14 +269,12 @@ class CMAES():
 
         for gen in range(max_generations+1):
 
-            np.save("distribution_{}.npy".format(self.exp_id[7:-4]),\
-                    self.distribution[0], self.distribution[1])#  , self.champions, self.champion_fitness)
+            np.save("distribution0_{}.npy".format(self.exp_id[7:-4]),\
+                    self.distribution[0])#  , self.champions, self.champion_fitness)
+            
+            np.save("distribution1_{}.npy".format(self.exp_id[7:-4]),\
+                    self.distribution[1])#  , self.champions, self.champion_fitness)
 
-            if gen > 0:
-                # receive parameters from workers (skip on first pass)
-
-                # update population (skip on first pass) 
-                self.update_pop(fitness_list)
 
 
             # send parameters to workers
@@ -248,6 +306,13 @@ class CMAES():
 
                     comm.send(params_list, dest=cc)
 
+            if gen > 0:
+                # receive parameters from workers (skip on first pass)
+
+                # update population (skip on first pass) 
+                self.update_pop(fitness_list)
+
+            if self.num_workers > 0:
                 # receive fitness scores from workers
                 fitness_list = []
                 info_list = []
@@ -279,13 +344,17 @@ class CMAES():
 
                     self.total_env_interacts += steps
 
-            #import pdb; pdb.set_trace()
             t1 = time.time()
             elapsed = t1 - t0
+
+            if True in [np.isnan(elem) for elem in fitness_list]:
+                print("warning, nan in fitness_list")
+                fitness_list = [-float("Inf") if np.isnan(elem) else elem for elem in fitness_list]
 
             max_fit = np.max(fitness_list)
             mean_fit = np.mean(fitness_list)
             sd_fit = np.std(fitness_list)
+
             print("gen {}, fitness mean: {:.2e} +/- {:.2e} s.d. max {:.2e}"\
                     .format(gen, mean_fit, sd_fit, max_fit) )
             print("{:.2f} elapsed, total env. interactions: {}"\
