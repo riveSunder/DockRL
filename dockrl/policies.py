@@ -7,6 +7,15 @@ import numpy as np
 from collections import OrderedDict
 from functools import reduce
 
+class ArcTan(nn.Module):
+
+    def __init__(self):
+        super(ArcTan,self).__init__()
+
+    def forward(self, x):
+
+        return torch.arctan(x) / 1.5708
+
 class Params():
 
     def __init__(self, dim_in=7, dim_act=6):
@@ -14,6 +23,7 @@ class Params():
         self.dim_act = dim_act
 
         self.init_params()
+        self.act = ArcTan()
 
     def init_params(self):
 
@@ -35,6 +45,7 @@ class Params():
         pass
 
 
+
 class GraphNN(nn.Module):
 
     def __init__(self, dim_in=7, dim_act=6):
@@ -46,8 +57,8 @@ class GraphNN(nn.Module):
         # This is a guesstimate based on: 
         # https://pymolwiki.org/index.php/Displaying_Biochemical_Properties
         self.bond_cutoff = 3.6
-        self.number_updates = 8
-        self.dropout_rate = 1. / self.dim_h
+        self.number_updates = 16
+        self.dropout_rate = 0.0 #1. / self.dim_h
 
         self.initialize_gnn()
         self.reset()
@@ -61,26 +72,18 @@ class GraphNN(nn.Module):
         self.model = nn.Sequential(\
                 nn.Linear(self.ligand_dim, self.dim_h),\
                 nn.LeakyReLU(),\
-                nn.Linear(self.dim_h, self.dim_h),\
-                nn.LeakyReLU(),\
                 nn.Linear(self.dim_h, self.ligand_dim + 8 + 8)
                 )
 
         self.encoder = nn.Sequential(\
-                nn.Linear(2*self.ligand_dim, self.dim_h),\
-                nn.LeakyReLU(),
-                nn.Dropout(p=self.dropout_rate)\
-                )
-
-        self.decoder = nn.Sequential(\
-                nn.Linear(self.dim_h, self.ligand_dim),\
+                nn.Linear(2*self.ligand_dim, self.ligand_dim),\
+                ArcTan()
                 )
 
         self.action_layer = nn.Sequential(\
                 nn.Linear(self.ligand_dim, self.dim_h),\
                 nn.LeakyReLU(),\
-                nn.Linear(self.dim_h, self.dim_act),\
-                nn.Sigmoid()
+                nn.Linear(self.dim_h, self.dim_act)\
                 )
         
     def get_distance(self, node_0, node_1):
@@ -117,6 +120,7 @@ class GraphNN(nn.Module):
         temp_input = [torch.Tensor()] 
         #orch.Tensor() #torch.zeros(x.shape[0], self.dim_h+8+8)
 
+
         for kk in range(x.shape[0]):
             # loop through nodes for each node
             for ll in range(x.shape[0]):
@@ -141,7 +145,8 @@ class GraphNN(nn.Module):
             #this is where the cell gating would happen (TODO)
             codes = torch.cat([codes, self.encoder(my_input).unsqueeze(0)])
 
-            new_graph = torch.cat([new_graph, self.decoder(codes[-1]).unsqueeze(0)])
+            new_graph = torch.cat([new_graph, codes[-1].unsqueeze(0)])
+            #self.decoder(codes[-1]).unsqueeze(0)])
 
 
         if return_codes:
@@ -175,8 +180,8 @@ class GraphNN(nn.Module):
         for param in self.encoder.named_parameters():
             params = np.append(params, param[1].detach().numpy().ravel())
 
-        for param in self.decoder.named_parameters():
-            params = np.append(params, param[1].detach().numpy().ravel())
+#        for param in self.decoder.named_parameters():
+#            params = np.append(params, param[1].detach().numpy().ravel())
 
         for param in self.action_layer.named_parameters():
             params = np.append(params, param[1].detach().numpy().ravel())
@@ -203,12 +208,12 @@ class GraphNN(nn.Module):
             param[:] = torch.nn.Parameter(torch.Tensor(\
                     my_params[param_start:param_stop].reshape(param.shape)))
 
-        for name, param in self.decoder.named_parameters():
-
-            param_stop = param_start + reduce(lambda x,y: x*y, param.shape)
-
-            param[:] = torch.nn.Parameter(torch.Tensor(\
-                    my_params[param_start:param_stop].reshape(param.shape)))
+#        for name, param in self.decoder.named_parameters():
+#
+#            param_stop = param_start + reduce(lambda x,y: x*y, param.shape)
+#
+#            param[:] = torch.nn.Parameter(torch.Tensor(\
+#                    my_params[param_start:param_stop].reshape(param.shape)))
 
         for name, param in self.action_layer.named_parameters():
 
