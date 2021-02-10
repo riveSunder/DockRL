@@ -48,7 +48,10 @@ class CMAES():
 
     def get_agent_action(self, obs, agent_idx, elite=False):
 
-        action = self.population[agent_idx].get_actions(obs)
+        if elite:
+            action = self.champions[agent_idx].get_actions(obs)
+        else:
+            action = self.population[agent_idx].get_actions(obs)
 
         action = action.detach().numpy().squeeze()
 
@@ -155,8 +158,6 @@ class CMAES():
                 covar_matrix]
 
         use_elitism = True
-        if np.mean(temp_params) > 32:
-            import pdb; pdb.set_trace()
 
         for ll in range(self.population_size):
 

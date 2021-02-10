@@ -26,8 +26,8 @@ class DockEnv():
         self.chnops_tokens = self.atom_tokens()
 
         self.l1_reg = 0.#1e-1
-        self.l2_reg = 0. #1e-1
-        self.lsup_reg = 1.0
+        self.l2_reg = 1e-2
+        self.lsup_reg = 0.0
 
     def atom_tokens(self, my_seed=13):
         np.random.seed(my_seed)
@@ -186,7 +186,7 @@ class DockEnv():
     def get_default_rmsd(self, mode="test"):
 
         rmsd = 0.0
-        num_docks = 16
+        num_docks = 100
 
         num_samples = len(self.ligands_test_dir) if mode=="test" else len(self.ligands_dir)
         for ii in range(num_docks):
@@ -211,7 +211,7 @@ class DockEnv():
 
 
         rmsd = 0.0
-        num_docks = 16
+        num_docks = 100
 
         action = np.array([-0.0460161,\
                 -0.000384274,\
