@@ -10,7 +10,7 @@ import numpy as np
 from collections import OrderedDict
 from copy import deepcopy
 
-from dockrl.policies import MRNN, Params, GraphNN
+from dockrl.policies import MRNN, Params, GraphNN, MLP
 from dockrl.dock_env import DockEnv
 
 import pdb
@@ -415,7 +415,7 @@ class CMAES():
     def evaluate_rmsd(self, mode="test", idx=0):
         
         rmsd = 0.0
-        num_docks = 16
+        num_docks = 100
 
         num_samples = len(self.env.ligands_test_dir) \
                 if mode=="test" else len(self.env.ligands_dir)
@@ -486,6 +486,9 @@ if __name__ == "__main__":
     elif "params" in args.policy.lower():
         my_policy_fn = Params
         my_cmaes = DirectCMAES
+    elif "mlp" in args.policy.lower():
+        my_policy_fn = MLP
+        my_cmaes = CMAES
 
     cmaes = my_cmaes(policy_fn=my_policy_fn, env_fn=DockEnv, num_workers=num_workers,\
             pop_size=pop_size, dim_in=7, dim_act=6)

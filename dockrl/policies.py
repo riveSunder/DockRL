@@ -226,6 +226,71 @@ class GraphNN(nn.Module):
         # initialize using gated cell states here later (maybe)
         pass
 
+class MLP(nn.Module):
+    def __init__(self, dim_in=6, dim_act=5):
+        super(MLP, self).__init__()
+
+        self.dim_in = dim_in
+        self.dim_act = dim_act
+        self.dim_h = 64
+
+        self.init_params()
+
+    def init_params(self):
+
+        self.model = nn.Sequential(\
+                nn.Linear(self.dim_in, self.dim_h),\
+                nn.ReLU(),\
+                nn.Linear(self.dim_h, self.dim_h),\
+                nn.ReLU(),\
+                nn.Linear(self.dim_h, self.dim_act)\
+                )
+
+        self.num_params = self.get_params().shape[0]
+
+    def forward(self, x):
+
+        x = torch.Tensor(x)
+
+        if len(x.shape) == 1:
+            x = x.unsqueeze(0)
+
+
+        x = self.model(x)
+
+
+        return x
+
+    def get_actions(self, x):
+
+        act = self.forward(x)
+        act = torch.mean(act, dim=0, keepdim=True)
+        return act
+
+    def get_params(self):
+        params = np.array([])
+
+        for param in self.model.named_parameters():
+            params = np.append(params, param[1].detach().numpy().ravel())
+
+        return params
+
+    def set_params(self, my_params):
+
+        if my_params is None:
+            my_params = self.init_mean + torch.randn(self.num_params) * torch.sqrt(torch.tensor(self.var))
+
+        param_start = 0
+        for name, param in self.model.named_parameters():
+
+            param_stop = param_start + reduce(lambda x,y: x*y, param.shape)
+
+            param[:] = torch.nn.Parameter(torch.Tensor(\
+                    my_params[param_start:param_stop].reshape(param.shape)))
+
+    def reset(self):
+        pass
+
 class MRNN(nn.Module):
     def __init__(self, dim_in=6, dim_act=5):
         super(MRNN, self).__init__()
