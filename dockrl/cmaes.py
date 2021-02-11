@@ -22,22 +22,35 @@ comm = MPI.COMM_WORLD
 
 class CMAES():
 
-    def __init__(self, policy_fn, env_fn=DockEnv, num_workers=0, \
-            pop_size=64, dim_in=7, dim_act=6):
+    def __init__(self, policy_fn, env_fn=DockEnv, **kwargs):
+
+        self.my_seed = kwargs["seed"] if "seed" in kwargs.keys() else 42
+        self.num_workers = kwargs["num_workers"] if "num_workers" \
+                in kwargs.keys() else 0
+        self.population_size = kwargs["pop_size"] if "pop_size" \
+                in kwargs.keys() else 16
+        self.dim_in = kwargs["dim_in"] if "dim_in" in kwargs.keys() \
+                else 7
+        self.dim_h = kwargs["dim_h"] if "dim_h" in kwargs.keys() \
+                else 16
+        self.dim_act = kwargs["dim_act"] if "dim_act" in kwargs.keys() \
+                else 6
+        self.lr = kwargs["lr"] if "lr" in kwargs.keys() else 1.0
+        self.dropout = kwargs["dropout"] if "dropout" in kwargs.keys() else 0.0
 
         self.env = env_fn()
 
-        self.num_workers = num_workers
-        self.population_size = pop_size
         self.elite_keep = int(self.population_size/8)
 
-        self.dim_in = dim_in
-        self.dim_act = dim_act
     
-        self.population = [policy_fn(dim_in, dim_act) \
+    #def __init__(self, dim_in=7, dim_act=6, dim_h=0, dropout=0.0):
+        self.population = [policy_fn(\
+                dim_in=self.dim_in,\
+                dim_act=self.dim_act,\
+                dim_h=self.dim_h,\
+                dropout=self.dropout) \
                 for ii in range(self.population_size)]
 
-        self.lr = 1.e-1
         self.distribution = [np.zeros((self.population[0].num_params)),\
                 0.1*np.eye(self.population[0].num_params)]
     
@@ -261,9 +274,16 @@ class CMAES():
                 "sd_fitness": [],\
                 "total_env_interacts": [],\
                 "rmsd_mean": [],\
-                "rmsd_min": [],\
                 "rmsd_sd": [],\
-                "generation": []}
+                "generation": [],\
+                "rmsd_max": [],\
+                "rmsd_min": [],\
+                "dim_in": self.dim_in,\
+                "dim_h": self.dim_h,\
+                "dim_act": self.dim_act,\
+                "dropout": self.dropout,\
+                "exp_id": self.exp_id,\
+                "model": self.population[0].model_name}
 
 
         t0 = time.time()
@@ -271,11 +291,13 @@ class CMAES():
 
         for gen in range(max_generations+1):
 
-            np.save("./parameters/mean_{}_gen_{}.npy".format(self.exp_id[7:-4], gen),\
-                    self.distribution[0])#  , self.champions, self.champion_fitness)
+            np.save("./parameters/gen_{}_means_{}.npy"\
+                    .format(gen, self.exp_id[7:-4]),\
+                    self.distribution[0])
             
-            np.save("./parameters/covar_{}_gen_{}.npy".format(self.exp_id[7:-4], gen),\
-                    self.distribution[1])#  , self.champions, self.champion_fitness)
+            np.save("./parameters/gen_{}_covar_{}.npy"\
+                    .format(gen, self.exp_id[7:-4]),\
+                    self.distribution[1])
 
 
 
@@ -369,6 +391,7 @@ class CMAES():
             fitness_log["sd_fitness"].append(sd_fit)
             fitness_log["total_env_interacts"].append(self.total_env_interacts)
             fitness_log["rmsd_min"].append(np.min(rmsd))
+            fitness_log["rmsd_max"].append(np.max(rmsd))
             fitness_log["rmsd_mean"].append(np.mean(rmsd))
             fitness_log["rmsd_sd"].append(np.std(rmsd))
             fitness_log["generation"].append(gen)
@@ -445,10 +468,8 @@ class CMAES():
 
 class DirectCMAES(CMAES):
 
-    def __init__(self, policy_fn=Params, env_fn=DockEnv, \
-            num_workers=0, pop_size=10, dim_in=7, dim_act=6):
-        super(DirectCMAES, self).__init__(policy_fn, env_fn, num_workers,\
-                pop_size, dim_in, dim_act)
+    def __init__(self, policy_fn=Params, env_fn=DockEnv, **kwargs):
+        super(DirectCMAES, self).__init__(policy_fn, env_fn, **kwargs)
 
 
     def get_agent_action(self, obs, agent_idx, elite=False):
@@ -472,10 +493,20 @@ if __name__ == "__main__":
             help="total number of generations to train")
     parser.add_argument("-pi", "--policy", type=str, default="Params",\
             help="which policy to use")
-
+    parser.add_argument("-l", "--dim_h", type=int, default=32,\
+            help="size of hidden layers")
+    parser.add_argument("-d", "--dropout", type=float, default=0.0,\
+            help="dropout rate")
+    parser.add_argument("-s", "--seed", type=int, default=42,\
+            help="seed for pseudorandom number generators")
     
 
+
     args = parser.parse_args()
+
+    # seeding
+    np.random.seed(args.seed)
+    torch.random.manual_seed(args.seed)
 
     num_workers = args.cpu
     pop_size = args.population_size
@@ -492,8 +523,9 @@ if __name__ == "__main__":
         my_policy_fn = MLP
         my_cmaes = CMAES
 
-    cmaes = my_cmaes(policy_fn=my_policy_fn, env_fn=DockEnv, num_workers=num_workers,\
-            pop_size=pop_size, dim_in=7, dim_act=6)
+    cmaes = my_cmaes(policy_fn=my_policy_fn, env_fn=DockEnv, num_workers=num_workers, \
+            pop_size=pop_size, dim_in=7, dim_act=6, dim_h=args.dim_h, dropout=args.dropout, \
+            seed=args.seed)
     cmaes.train(max_generations=max_generations)
     
     

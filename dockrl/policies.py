@@ -18,9 +18,13 @@ class ArcTan(nn.Module):
 
 class Params():
 
-    def __init__(self, dim_in=7, dim_act=6):
+    def __init__(self, dim_in=7, dim_act=6, dim_h=0, dropout=0.0):
         
         self.dim_act = dim_act
+        self.dim_in = 0
+        self.dim_h = 0
+        self.dropout = 0.0
+        self.model_name = "DockRLParams"
 
         self.init_params()
         self.act = ArcTan()
@@ -48,17 +52,18 @@ class Params():
 
 class GraphNN(nn.Module):
 
-    def __init__(self, dim_in=7, dim_act=6):
+    def __init__(self, dim_in=7, dim_act=6, dim_h=8, dropout=0.00):
         super(GraphNN, self).__init__()
         
         self.ligand_dim = dim_in
-        self.dim_h = 8
+        self.dim_h = dim_h
         self.dim_act = dim_act
+        self.model_name = "DockRLGraphNN"
         # This is a guesstimate based on: 
         # https://pymolwiki.org/index.php/Displaying_Biochemical_Properties
         self.bond_cutoff = 3.6
         self.number_updates = 16
-        self.dropout_rate = 0.0 #1. / self.dim_h
+        self.dropout = dropout
 
         self.initialize_gnn()
         self.reset()
@@ -69,10 +74,13 @@ class GraphNN(nn.Module):
     def initialize_gnn(self):
 
         # vertices MLP, with 8 element key and query vectors for self-attention
-        self.model = nn.Sequential(\
+        self.edge_model = nn.Sequential(\
                 nn.Linear(self.ligand_dim, self.dim_h),\
                 nn.LeakyReLU(),\
-                nn.Linear(self.dim_h, self.ligand_dim + 8 + 8)
+                nn.Linear(self.dim_h, self.dim_h),\
+                nn.LeakyReLU(),\
+                nn.Dropout(p=self.dropout),\
+                nn.Linear(self.dim_h, self.ligand_dim + 2 * self.dim_h)
                 )
 
         self.encoder = nn.Sequential(\
@@ -126,10 +134,10 @@ class GraphNN(nn.Module):
             for ll in range(x.shape[0]):
                 if self.graph[kk,ll]:
                     temp_input[-1] = torch.cat([temp_input[-1],\
-                            self.model(x[ll]).unsqueeze(0)])
+                            self.edge_model(x[ll]).unsqueeze(0)])
 
-            keys = temp_input[-1][:,-16:-8]
-            queries = temp_input[-1][:,-8:]
+            keys = temp_input[-1][:,-self.dim_h*2:-self.dim_h]
+            queries = temp_input[-1][:,-self.dim_h:]
 
             attention = torch.zeros(1, keys.shape[0])
 
@@ -174,7 +182,7 @@ class GraphNN(nn.Module):
     def get_params(self):
         params = np.array([])
 
-        for param in self.model.named_parameters():
+        for param in self.edge_model.named_parameters():
             params = np.append(params, param[1].detach().numpy().ravel())
 
         for param in self.encoder.named_parameters():
@@ -194,7 +202,7 @@ class GraphNN(nn.Module):
             my_params = self.init_mean + torch.randn(self.num_params) * torch.sqrt(torch.tensor(self.var))
 
         param_start = 0
-        for name, param in self.model.named_parameters():
+        for name, param in self.edge_model.named_parameters():
 
             param_stop = param_start + reduce(lambda x,y: x*y, param.shape)
 
@@ -227,12 +235,14 @@ class GraphNN(nn.Module):
         pass
 
 class MLP(nn.Module):
-    def __init__(self, dim_in=6, dim_act=5):
+    def __init__(self, dim_in=6, dim_act=5, dim_h=32, dropout=0.0):
         super(MLP, self).__init__()
 
         self.dim_in = dim_in
         self.dim_act = dim_act
         self.dim_h = 32
+        self.dropout = dropout
+        self.model_name = "DockRLMLP"
 
         self.init_params()
 
@@ -243,6 +253,7 @@ class MLP(nn.Module):
                 nn.ReLU(),\
                 nn.Linear(self.dim_h, self.dim_h),\
                 nn.ReLU(),\
+                nn.Dropout(p=self.dropout),\
                 nn.Linear(self.dim_h, self.dim_act)\
                 )
 
