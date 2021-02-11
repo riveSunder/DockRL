@@ -20,8 +20,8 @@ class DockEnv():
         
         self.ligand = None
         self.receptor = None
-        self.exhaustiveness = 8
-        self.smina_cpu = 8
+        self.exhaustiveness = 10
+        self.smina_cpu = 10
         self.max_steps = 1
         self.chnops_tokens = self.atom_tokens()
 
@@ -41,19 +41,14 @@ class DockEnv():
 
         return tokens
 
-    def run_docking(self, action=None, idx=None):
+    def run_docking(self, action=None):
 
         assert self.ligand is not None, "should be unreachable, call env.reset() first"
 
 
-#        try: 
-        if idx is None:
-            obj_filename = "./scoring/dock.score"
-            output_filename =  "./output/{}-redocking.pdbqt".format(self.ligand[0:4]) 
-        else:
-            obj_filename = "./scoring/dock{}.score".format(idx)
-            output_filename =  "./output/{}-redocking{}.pdbqt"\
-                    .format(self.ligand[0:4], idx) 
+        obj_filename = "./scoring/dock{}.score".format(self.worker_idx)
+        output_filename =  "./output/{}-redocking{}.pdbqt"\
+                .format(self.ligand[0:4], self.worker_idx) 
 
         if action is None:
             my_command = "./smina.static"\
@@ -88,11 +83,11 @@ class DockEnv():
 
         #os.system(my_command)
         try:
-            temp = check_output(my_command.split(), timeout=60)
+            temp = check_output(my_command.split(), timeout=180)
         except:
             print(my_command.splitlines())
             print("timeout occured, attempting again")
-            self.run_docking(action=action, idx=idx)
+            self.run_docking(action=action)
         
         #check if autodock program output a blank pdbqt file
         f = open(output_filename, 'r')
@@ -103,15 +98,11 @@ class DockEnv():
             
             print(my_command.splitlines())
             print("sim output blank file, attempting to run again")
-            self.run_docking(action=action, idx=idx)
+            self.run_docking(action=action)
     
-    def get_rmsd(self, worker_idx=None):
+    def get_rmsd(self):
 
-        #try: 
-        if worker_idx is None:
-            redock_fn = "./output/{}-redocking.pdbqt".format(self.ligand[0:4])
-        else:
-            redock_fn = "./output/{}-redocking{}.pdbqt".format(self.ligand[0:4], worker_idx)
+        redock_fn = "./output/{}-redocking{}.pdbqt".format(self.ligand[0:4], self.worker_idx)
 
         
         f = open(redock_fn, 'r')
@@ -124,14 +115,6 @@ class DockEnv():
         gt_lines = f_gt.readlines()
         comp_lines= f.readlines() 
 
-        
-#            while ("ATOM" not in gt) or ('1' not in gt):
-#                gt = f_gt.readline().split()
-#            while ("ATOM" not in comp) or ('1' not in comp):
-#                comp = f.readline().split()
-
-
-        #while not stop:
         old_jj = 0
         for ii in range(len(gt_lines)): #gt_line, comp_line in zip(f_gt.readlines(), f.readlines()):
 
@@ -165,9 +148,9 @@ class DockEnv():
         else: 
             print("mismatch in output/reference ligands? rerun docking with default params") 
             print(self.ligand, redock_fn)
-            self.run_docking(idx=worker_idx)
+            self.run_docking()
 
-            rmsd = self.get_rmsd(worker_idx=worker_idx)
+            rmsd = self.get_rmsd()
             #rmsd = 20.0
 
         f.close()
@@ -179,14 +162,12 @@ class DockEnv():
 
         if np.isnan(rmsd):
             print("warning, nan detected (!)")
-            pass
 
         return rmsd
 
-    def get_default_rmsd(self, mode="test"):
+    def get_default_rmsd(self, mode="test", num_docks=50):
 
         rmsd = 0.0
-        num_docks = 100
 
         num_samples = len(self.ligands_test_dir) if mode=="test" else len(self.ligands_dir)
         for ii in range(num_docks):
@@ -207,11 +188,10 @@ class DockEnv():
 
         return rmsd
 
-    def get_bjerrum_rmsd(self, mode="test"):
+    def get_bjerrum_rmsd(self, mode="test", num_docks=50):
 
 
         rmsd = 0.0
-        num_docks = 100
 
         action = np.array([-0.0460161,\
                 -0.000384274,\
@@ -238,13 +218,13 @@ class DockEnv():
         return rmsd
 
 
-    def step(self, action, worker_idx=None):
+    def step(self, action):
 
         assert self.ligand is not None, "Must call env.reset() before env.step(action)"
 
-        self.run_docking(action, idx=worker_idx)
+        self.run_docking(action)
 
-        rmsd = self.get_rmsd(worker_idx=worker_idx)
+        rmsd = self.get_rmsd()
 
         # an rmsd of less than 2.0 angstroms is generally considered "accurate"
         #reward = 10.0 if rmsd <= 2.0 else -rmsd
@@ -323,7 +303,9 @@ class DockEnv():
         self.raw_nodes = raw_nodes
         self.nodes = nodes
 
-    def reset(self, test=False, sample_idx=None):
+    def reset(self, test=False, sample_idx=None, worker_idx=0):
+
+        self.worker_idx = worker_idx
 
         self.steps = 0
         if test:

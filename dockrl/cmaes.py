@@ -37,7 +37,7 @@ class CMAES():
         self.population = [policy_fn(dim_in, dim_act) \
                 for ii in range(self.population_size)]
 
-        self.lr = 1.e0
+        self.lr = 1.e-1
         self.distribution = [np.zeros((self.population[0].num_params)),\
                 0.1*np.eye(self.population[0].num_params)]
     
@@ -68,7 +68,8 @@ class CMAES():
         for epd in range(epds):
             self.population[agent_idx].reset()
 
-            obs = self.env.reset(sample_idx = epd % 11)
+            obs = self.env.reset(worker_idx=rank, sample_idx = epd % 11)
+            
             done = False
             sum_reward = 0.0
             while not done:
@@ -77,7 +78,7 @@ class CMAES():
                 if len(action.shape) > 1:
                     action = action[0]
 
-                obs, reward, done, info = self.env.step(action, worker_idx)
+                obs, reward, done, info = self.env.step(action)
 
                 sum_reward += reward
                 total_steps += 1
@@ -270,13 +271,19 @@ class CMAES():
 
         for gen in range(max_generations+1):
 
-            np.save("distribution0_{}.npy".format(self.exp_id[7:-4]),\
+            np.save("./parameters/mean_{}_gen_{}.npy".format(self.exp_id[7:-4], gen),\
                     self.distribution[0])#  , self.champions, self.champion_fitness)
             
-            np.save("distribution1_{}.npy".format(self.exp_id[7:-4]),\
+            np.save("./parameters/covar_{}_gen_{}.npy".format(self.exp_id[7:-4], gen),\
                     self.distribution[1])#  , self.champions, self.champion_fitness)
 
 
+
+            if gen > 0:
+                # receive parameters from workers (skip on first pass)
+
+                # update population (skip on first pass) 
+                self.update_pop(fitness_list)
 
             # send parameters to workers
             # but if num_workers == 0, just do it all in the mantle process
@@ -307,11 +314,6 @@ class CMAES():
 
                     comm.send(params_list, dest=cc)
 
-            if gen > 0:
-                # receive parameters from workers (skip on first pass)
-
-                # update population (skip on first pass) 
-                self.update_pop(fitness_list)
 
             if self.num_workers > 0:
                 # receive fitness scores from workers
@@ -412,17 +414,17 @@ class CMAES():
             comm.send([fitness_sublist, total_substeps, info_sublist], dest=0)
             
 
-    def evaluate_rmsd(self, mode="test", idx=0):
+    def evaluate_rmsd(self, mode="test", idx=0, num_docks=50):
         
         rmsd = 0.0
-        num_docks = 100
 
         num_samples = len(self.env.ligands_test_dir) \
                 if mode=="test" else len(self.env.ligands_dir)
 
         for ii in range(num_docks):
 
-            obs = self.env.reset(test=(mode == "test"), sample_idx=ii % num_samples)
+            obs = self.env.reset(test=(mode == "test"), \
+                    sample_idx=ii % num_samples, worker_idx=rank)
             action = self.get_agent_action(obs, idx, elite=True)
             obs, reward, done, info = self.env.step(action)
             #action = self.get_agent_action(obs, 0, elite=True)

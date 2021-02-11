@@ -232,7 +232,7 @@ class MLP(nn.Module):
 
         self.dim_in = dim_in
         self.dim_act = dim_act
-        self.dim_h = 64
+        self.dim_h = 32
 
         self.init_params()
 
