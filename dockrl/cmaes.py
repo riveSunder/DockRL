@@ -482,27 +482,7 @@ class DirectCMAES(CMAES):
 
         return action
 
-if __name__ == "__main__":
-
-    parser = argparse.ArgumentParser("Optimization Parameters")
-    parser.add_argument("-c", "--cpu", type=int, default=0,\
-            help="number of cpu workers")
-    parser.add_argument("-p", "--population_size", type=int, default=10,\
-            help="size of evo population")
-    parser.add_argument("-g", "--max_generations", type=int, default=1,\
-            help="total number of generations to train")
-    parser.add_argument("-pi", "--policy", type=str, default="Params",\
-            help="which policy to use")
-    parser.add_argument("-l", "--dim_h", type=int, default=32,\
-            help="size of hidden layers")
-    parser.add_argument("-d", "--dropout", type=float, default=0.0,\
-            help="dropout rate")
-    parser.add_argument("-s", "--seed", type=int, default=42,\
-            help="seed for pseudorandom number generators")
-    
-
-
-    args = parser.parse_args()
+def run_train(args):
 
     # seeding
     np.random.seed(args.seed)
@@ -586,4 +566,25 @@ if __name__ == "__main__":
     #cmaes = CMAES(policy_fn=MRNN, env_fn=DockEnv)
     #cmaes.max_steps = 4
     #cmaes.train(max_generations=200)
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser("Optimization Parameters")
+    parser.add_argument("-c", "--cpu", type=int, default=0,\
+            help="number of cpu workers")
+    parser.add_argument("-p", "--population_size", type=int, default=10,\
+            help="size of evo population")
+    parser.add_argument("-g", "--max_generations", type=int, default=1,\
+            help="total number of generations to train")
+    parser.add_argument("-pi", "--policy", type=str, default="Params",\
+            help="which policy to use")
+    parser.add_argument("-l", "--dim_h", type=int, default=32,\
+            help="size of hidden layers")
+    parser.add_argument("-d", "--dropout", type=float, default=0.0,\
+            help="dropout rate")
+    parser.add_argument("-s", "--seed", type=int, default=42,\
+            help="seed for pseudorandom number generators")
+
+    args = parser.parse_args()
 
